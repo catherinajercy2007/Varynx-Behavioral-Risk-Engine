@@ -1,0 +1,4 @@
+﻿- [ ] T1.1: First task [depends on: ]
+- [ ] T1.10: Tenth task [depends on: ]
+- [ ] T1.2: Depends on first [depends on: T1.1]
+- [ ] T1.20: Depends on tenth [depends on: T1.10]

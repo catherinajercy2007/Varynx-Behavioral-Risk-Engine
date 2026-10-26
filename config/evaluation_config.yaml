@@ -1,0 +1,17 @@
+﻿# Varynx Evaluation Configuration
+# Satisfies: REQ-015, REQ-025, REQ-026
+
+evaluation_min_runs: 5
+bcse_min_history: 10
+random_seed: 42
+scenarios_dir: "scenarios/"
+
+# Ablation toggles — set to false to disable individual detectors in evaluation runs
+# Satisfies: REQ-025 (ablation configuration)
+ablation:
+  enable_capability_escalation: true
+  enable_resource_anomaly: true
+  enable_action_frequency: true
+  enable_authorization_bypass: true
+  enable_context_deviation: true
+  enable_temporal_anomaly: true

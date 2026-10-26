@@ -1,0 +1,21 @@
+﻿# Varynx Trust Level Thresholds
+# All thresholds documented here require empirical calibration.
+# Do not treat these values as production-validated defaults.
+# Satisfies: REQ-005.3, REQ-020
+
+# TrustLevel bands (thresholds are minimum scores for each level):
+#   HIGH:      [0.85, 1.00]  — score >= threshold_high
+#   ELEVATED:  [0.65, 0.85)  — score >= threshold_elevated
+#   GUARDED:   [0.40, 0.65)  — score >= threshold_guarded
+#   LOW:       [0.20, 0.40)  — score >= threshold_low
+#   CRITICAL:  [0.00, 0.20)  — score < threshold_low
+
+threshold_high: 0.85
+threshold_elevated: 0.65
+threshold_guarded: 0.40
+threshold_low: 0.20
+
+# Score computation parameters (all require empirical calibration):
+initial_score: 0.7
+sensitivity: 1.0          # Evidence impact multiplier
+temporal_decay_rate: 0.01  # Per-hour passive decay

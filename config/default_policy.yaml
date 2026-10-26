@@ -1,0 +1,49 @@
+version: "1.0.0"
+rules:
+  - if:
+      trust_level: CRITICAL
+    then:
+      response: TERMINATE
+      reason_codes: [TRUST_LEVEL_CRITICAL]
+
+  - if:
+      trust_level: LOW
+      trajectory: degrading
+    then:
+      response: SUSPEND
+      reason_codes: [TRUST_DEGRADED, TRAJECTORY_DEGRADING]
+
+  - if:
+      anomaly_class: AUTHORIZATION_BYPASS_ATTEMPT
+      trust_level: [LOW, GUARDED]
+    then:
+      response: SUSPEND
+      reason_codes: [BYPASS_ATTEMPT_DETECTED, TRUST_DEGRADED]
+
+  - if:
+      anomaly_class: AUTHORIZATION_BYPASS_ATTEMPT
+    then:
+      response: RESTRICT
+      reason_codes: [BYPASS_ATTEMPT_DETECTED]
+
+  - if:
+      anomaly_class: CAPABILITY_ESCALATION
+    then:
+      response: RESTRICT
+      reason_codes: [ESCALATION_DETECTED]
+
+  - if:
+      anomaly_class: RESOURCE_ANOMALY
+    then:
+      response: RESTRICT
+      reason_codes: [RESOURCE_SPREAD_DETECTED]
+
+  - if:
+      trust_level: [LOW, GUARDED]
+    then:
+      response: WARN
+      reason_codes: [TRUST_DEGRADED]
+
+  - default:
+      response: PERMIT
+      reason_codes: []

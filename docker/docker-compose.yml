@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  db:
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_USER: varynx
+      POSTGRES_PASSWORD: varynx_dev
+      POSTGRES_DB: varynx
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U varynx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  app:
+    build: ..
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      VARYNX_DATABASE_URL: postgresql://varynx:varynx_dev@db:5432/varynx
+      VARYNX_REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/app
