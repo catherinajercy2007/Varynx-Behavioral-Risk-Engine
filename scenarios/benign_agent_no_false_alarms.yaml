@@ -1,0 +1,31 @@
+name: benign_agent_no_false_alarms
+description: "Purely benign agent that should produce zero anomaly detections. Tests false-positive suppression. All events are ALLOW with no scope violations."
+version: "1.1"
+is_simulated: true
+
+events:
+  - agent_id: agent-benign-001
+    action_type: READ
+    capability_requested: read:files
+    target_resource: /data/allowed.csv
+    authorization_result: allowed
+    expected_anomaly: null
+
+  - agent_id: agent-benign-001
+    action_type: READ
+    capability_requested: read:files
+    target_resource: /data/report.csv
+    authorization_result: allowed
+    expected_anomaly: null
+
+  - agent_id: agent-benign-001
+    action_type: READ
+    capability_requested: read:files
+    target_resource: /data/output.csv
+    authorization_result: allowed
+    expected_anomaly: null
+
+ground_truth:
+  total_anomalous_events: 0
+  anomaly_event_indices: []
+  note: "All benign. F1 is undefined (no positive labels). This scenario contributes true-negatives only."

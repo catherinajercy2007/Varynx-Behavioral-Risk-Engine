@@ -1,4 +1,4 @@
-﻿"""Varynx configuration system.
+"""Varynx configuration system.
 
 All behavioral thresholds and policy parameters are externally configurable
 via environment variables (VARYNX_ prefix) and never hard-coded.
@@ -296,7 +296,7 @@ def load_config(**overrides: Any) -> VarynxConfig:
     try:
         config = VarynxConfig(**overrides)
     except ValidationError as exc:
-        fields = ", ".join(e["loc"][0] for e in exc.errors() if e.get("loc"))  # type: ignore[index]
+        fields = ", ".join(str(e["loc"][0]) for e in exc.errors() if e.get("loc"))
         raise ConfigurationError(f"CONFIGURATION_INVALID: {fields}") from exc
 
     if not config.database_url:
