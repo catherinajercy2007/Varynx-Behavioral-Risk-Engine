@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Testing
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output
+output/
+results/
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js / Dashboard
+node_modules/
+.next/
+out/
+dashboard/.env*.local
+
+# Backup files
+*.bak
+
+# Scratch audit/test artifacts (regeneratable; findings captured in VARYNX_*.md)
+# !! VARYNX_*.md are NOT ignored — they are permanent project audit evidence.
+AUDIT_*.txt
+SIZE_REPORT.txt
+BACKUP_REPORT.txt
+SECRET_SCAN.txt
+TEST_RESULTS.txt
+FULL_TEST.txt
+GIT_REVIEW*.txt
+GIT_STATUS.txt
+GIT_UNTRACKED.txt
+BASELINE_*.txt
+BACKUP_MANIFEST.txt
+pip_list.txt
+re.txt
+ro.txt
+tr*.txt
+test_err.txt
+test_out.txt
+test_output.txt
+
+# Temporary runner scripts (double-underscore prefix, ROOT LEVEL ONLY)
+# The leading slash anchors to repo root so varynx/__init__.py etc. are not affected.
+/__*.py
+
+# Test-output captures (all *_out.txt in root)
+*_out.txt
+
+# Phase/task scratch status files
+PHASE*_*.txt
+TASK*_*.txt
+final_full_suite*.txt
+full_suite_out.txt
+full_suite_phase5.txt
+final_phase5_regression.txt
+dep_verify_out.txt
+TASK52B_STATE.txt
+/PRECOMMIT_FILELIST.txt
+precommit_test_result.txt
