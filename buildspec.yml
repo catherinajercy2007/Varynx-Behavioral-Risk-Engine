@@ -1,31 +1,39 @@
-﻿version: 0.2
+﻿```powershell
+Set-Location "C:\Users\cathe\OneDrive\Desktop\varynx"
+
+@'
+version: 0.2
 
 phases:
   pre_build:
     commands:
-      - echo "Checking AWS configuration..."
-      - test -n "$AWS_DEFAULT_REGION" || (echo "ERROR: AWS_DEFAULT_REGION is empty" && exit 1)
-      - test -n "$AWS_ACCOUNT_ID" || (echo "ERROR: AWS_ACCOUNT_ID is empty" && exit 1)
-      - export IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/varynx-backend"
-      - export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
-      - export IMAGE_TAG="$(echo "$IMAGE_TAG" | cut -c 1-12)"
-      - echo "Image URI: $IMAGE_URI"
-      - echo "Image tag: $IMAGE_TAG"
-      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      - 'echo Checking AWS configuration'
+      - 'test -n "$AWS_DEFAULT_REGION" || (echo "ERROR: AWS_DEFAULT_REGION is empty" && exit 1)'
+      - 'test -n "$AWS_ACCOUNT_ID" || (echo "ERROR: AWS_ACCOUNT_ID is empty" && exit 1)'
+      - 'export IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/varynx-backend"'
+      - 'export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"'
+      - 'export IMAGE_TAG="$(echo "$IMAGE_TAG" | cut -c 1-12)"'
+      - 'echo Image URI is "$IMAGE_URI"'
+      - 'echo Image tag is "$IMAGE_TAG"'
+      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
 
   build:
     commands:
-      - echo "Building Varynx backend Docker image..."
-      - docker build --progress=plain -t "${IMAGE_URI}:${IMAGE_TAG}" .
-      - docker tag "${IMAGE_URI}:${IMAGE_TAG}" "${IMAGE_URI}:latest"
+      - 'echo Building Varynx backend Docker image'
+      - 'docker build --progress=plain -t "${IMAGE_URI}:${IMAGE_TAG}" .'
+      - 'docker tag "${IMAGE_URI}:${IMAGE_TAG}" "${IMAGE_URI}:latest"'
 
   post_build:
     commands:
-      - echo "Pushing Varynx image to ECR..."
-      - docker push "${IMAGE_URI}:${IMAGE_TAG}"
-      - docker push "${IMAGE_URI}:latest"
-      - printf '[{"name":"varynx-backend","imageUri":"%s"}]' "${IMAGE_URI}:${IMAGE_TAG}" > imagedefinitions.json
+      - 'echo Pushing Varynx image to ECR'
+      - 'docker push "${IMAGE_URI}:${IMAGE_TAG}"'
+      - 'docker push "${IMAGE_URI}:latest"'
+      - 'printf ''[{"name":"varynx-backend","imageUri":"%s"}]'' "${IMAGE_URI}:${IMAGE_TAG}" > imagedefinitions.json'
 
 artifacts:
   files:
     - imagedefinitions.json
+'@ | Set-Content -Path .\buildspec.yml -Encoding utf8
+
+Get-Content .\buildspec.yml
+```
