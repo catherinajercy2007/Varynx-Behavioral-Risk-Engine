@@ -1,0 +1,26 @@
+﻿version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+      - IMAGE_URI="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME"
+      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+      - IMAGE_TAG=$(echo "$IMAGE_TAG" | cut -c 1-12)
+  build:
+    commands:
+      - echo Building Varynx backend image
+      - docker build -t "$IMAGE_URI:$IMAGE_TAG" .
+      - docker tag "$IMAGE_URI:$IMAGE_TAG" "$IMAGE_URI:latest"
+  post_build:
+    commands:
+      - echo Pushing Varynx image to ECR
+      - docker push "$IMAGE_URI:$IMAGE_TAG"
+      - docker push "$IMAGE_URI:latest"
+      - printf '[{"name":"varynx-backend","imageUri":"%s"}]' "$IMAGE_URI:$IMAGE_TAG" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
