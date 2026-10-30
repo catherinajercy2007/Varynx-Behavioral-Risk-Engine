@@ -1,5 +1,4 @@
-﻿```powershell
-Set-Location "C:\Users\cathe\OneDrive\Desktop\varynx"
+﻿Set-Location "C:\Users\cathe\OneDrive\Desktop\varynx"
 
 @'
 version: 0.2
@@ -36,4 +35,4 @@ artifacts:
 '@ | Set-Content -Path .\buildspec.yml -Encoding utf8
 
 Get-Content .\buildspec.yml
-```
+
