@@ -1,0 +1,24 @@
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+.........................F..F........................................... [ 83%]
+............................................                             [100%]
+================================== FAILURES ===================================
+______________ TestCloudTrailLocalMode.test_lookup_events_local _______________
+tests\unit\test_aws_adapters.py:105: in test_lookup_events_local
+    assert len(events) > 0
+E   assert 0 > 0
+E    +  where 0 = len([])
+_________________ TestIAMLocalMode.test_caller_identity_local _________________
+tests\unit\test_aws_adapters.py:126: in test_caller_identity_local
+    assert "caller" in identity
+E   AssertionError: assert 'caller' in {'mode': 'LOCAL_MODE', 'aws_caller': 'local-developer', 'varynx_note': 'Separate from Varynx agent identity', 'api_key_present': False, ...}
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\cathe\OneDrive\Desktop\varynx\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_aws_adapters.py::TestCloudTrailLocalMode::test_lookup_events_local
+FAILED tests/unit/test_aws_adapters.py::TestIAMLocalMode::test_caller_identity_local
+2 failed, 258 passed, 1 warning in 18.16s

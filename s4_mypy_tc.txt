@@ -1,0 +1,11 @@
+tests\unit\test_config.py:12: error: Function is missing a type annotation  [no-untyped-def]
+tests\unit\test_config.py:18: error: Function is missing a type annotation  [no-untyped-def]
+tests\unit\test_config.py:24: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_config.py:24: note: Use "-> None" if function does not return a value
+tests\unit\test_config.py:35: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_config.py:35: note: Use "-> None" if function does not return a value
+tests\unit\test_config.py:43: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_config.py:43: note: Use "-> None" if function does not return a value
+tests\unit\test_config.py:52: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_config.py:52: note: Use "-> None" if function does not return a value
+Found 6 errors in 1 file (checked 1 source file)

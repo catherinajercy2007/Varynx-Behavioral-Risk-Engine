@@ -1,0 +1,71 @@
+varynx\evaluation\metrics.py:52: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\metrics.py:75: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:29: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:30: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:31: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:39: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:88: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:89: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:90: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:91: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\analysis.py:92: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\lease_manager.py:41: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\audit.py:21: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\audit.py:39: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\audit.py:144: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\baselines.py:21: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\baselines.py:42: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\baselines.py:70: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\baselines.py:87: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\enforcement.py:50: error: Missing type parameters for generic type "EscalationRecord"  [type-arg]
+varynx\engine\enforcement.py:294: error: Missing type parameters for generic type "EscalationRecord"  [type-arg]
+varynx\engine\enforcement.py:339: error: Missing type parameters for generic type "EscalationRecord"  [type-arg]
+varynx\engine\enforcement.py:347: error: Missing type parameters for generic type "EscalationRecord"  [type-arg]
+varynx\engine\trust.py:61: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+varynx\engine\trust.py:79: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+varynx\engine\evidence.py:30: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\evidence.py:62: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\engine\evidence.py:450: error: "object" has no attribute "detector_id"  [attr-defined]
+varynx\engine\evidence.py:451: error: "object" has no attribute "detect"  [attr-defined]
+varynx\engine\evidence.py:451: note: Error code "attr-defined" not covered by "type: ignore" comment
+varynx\engine\evidence.py:455: error: "object" has no attribute "detect"  [attr-defined]
+varynx\engine\evidence.py:462: error: "object" has no attribute "detector_id"  [attr-defined]
+varynx\engine\evidence.py:477: error: "object" has no attribute "detector_id"  [attr-defined]
+varynx\engine\evidence.py:451: error: Unused "type: ignore" comment  [unused-ignore]
+varynx\engine\pipeline.py:215: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:28: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:38: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:43: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:49: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:149: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:180: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:271: error: Missing type parameters for generic type "dict"  [type-arg]
+varynx\evaluation\runner.py:280: error: Missing type parameters for generic type "dict"  [type-arg]
+tests\unit\test_eval_metrics.py:32: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:32: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:46: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:46: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:60: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:60: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:72: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:72: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:87: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:87: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:101: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:101: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:118: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:118: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:133: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:133: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:150: error: Missing type parameters for generic type "dict"  [type-arg]
+tests\unit\test_eval_metrics.py:155: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:155: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:175: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:175: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:184: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:184: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:196: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:196: note: Use "-> None" if function does not return a value
+tests\unit\test_eval_metrics.py:202: error: Function is missing a return type annotation  [no-untyped-def]
+tests\unit\test_eval_metrics.py:202: note: Use "-> None" if function does not return a value
+Found 56 errors in 11 files (checked 3 source files)

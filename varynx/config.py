@@ -43,7 +43,7 @@ class TrustConfig(BaseSettings):
         le=1.0,
         description="Per-hour trust decay rate. Requires empirical calibration (REQ-005.3).",
     )
-    # TrustLevel thresholds — all require empirical calibration
+    # TrustLevel thresholds ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â all require empirical calibration
     threshold_high: float = Field(
         default=0.85,
         ge=0.0,
@@ -176,7 +176,7 @@ class BCSeConfig(BaseSettings):
     evaluation_timeout_seconds: float = Field(
         default=2.0,
         ge=0.1,
-        description="BCSE evaluation timeout. Target: ≤2s under nominal load (REQ-007.7).",
+        description="BCSE evaluation timeout. Target: ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤2s under nominal load (REQ-007.7).",
     )
 
 
@@ -200,6 +200,73 @@ class EvaluationConfig(BaseSettings):
     random_seed: int = Field(
         default=42,
         description="Random seed for reproducible evaluation (REQ-015, REQ-025).",
+    )
+
+
+
+
+class AWSConfig(BaseSettings):
+    """AWS integration configuration.
+
+    All AWS integration is disabled by default (aws_enabled=False).
+    The core Varynx engine never requires live AWS access.
+
+    Environment variable prefix: VARYNX_AWS__
+    """
+
+    model_config = SettingsConfigDict(env_prefix="VARYNX_AWS__", extra="ignore")
+
+    enabled: bool = Field(
+        default=False,
+        description="Master switch. When False all AWS operations are local/mock.",
+    )
+    region: str = Field(
+        default="us-east-1",
+        description="AWS region. Overridden by AWS_REGION env var if set.",
+    )
+    mock_mode: bool = Field(
+        default=False,
+        description="Use mock AWS clients in tests. Must be explicitly enabled.",
+    )
+    # IAM
+    iam_verify_identity: bool = Field(
+        default=False,
+        description="Call sts:GetCallerIdentity on startup to verify credentials.",
+    )
+    # CloudWatch
+    cloudwatch_enabled: bool = Field(
+        default=False,
+        description="Publish security metrics to CloudWatch when True.",
+    )
+    cloudwatch_namespace: str = Field(
+        default="Varynx/SecurityEngine",
+        description="CloudWatch metric namespace.",
+    )
+    cloudwatch_log_group: str = Field(
+        default="/varynx/security",
+        description="CloudWatch Logs log group name.",
+    )
+    # CloudTrail
+    cloudtrail_enabled: bool = Field(
+        default=False,
+        description="Enable CloudTrail event ingestion.",
+    )
+    cloudtrail_trail_name: str | None = Field(
+        default=None,
+        description="CloudTrail trail name to monitor. None = describe all trails.",
+    )
+    # S3
+    s3_enabled: bool = Field(
+        default=False,
+        description="Enable S3 artifact uploads when True.",
+    )
+    s3_bucket: str | None = Field(
+        default=None,
+        description="S3 bucket name for artifact exports. Required when s3_enabled=True.",
+    )
+    s3_prefix: str = Field(
+        default="varynx/",
+        description="Object key prefix for all S3 uploads.",
     )
 
 
@@ -252,9 +319,18 @@ class VarynxConfig(BaseSettings):
             "bypassed with a logged warning. Satisfies REQ-016.3."
         ),
     )
+    require_api_key: bool = Field(
+        default=False,
+        description=(
+            "When True, the application will refuse to start if api_key is not set. "
+            "Set VARYNX_REQUIRE_API_KEY=true in production deployments to prevent "
+            "accidentally running without authentication. Does not affect local "
+            "development where api_key is intentionally absent. Satisfies REQ-016.3."
+        ),
+    )
 
     cors_origins: str = Field(
-        default="http://localhost:3000",
+        default="http://localhost:3000,http://localhost:3001",
         description=(
             "Allowed CORS origins as a comma-separated string. Parsed from "
             "VARYNX_CORS_ORIGINS. Default permits the local dashboard. "
@@ -272,6 +348,7 @@ class VarynxConfig(BaseSettings):
     policy: PolicyConfig = Field(default_factory=PolicyConfig)
     bcse: BCSeConfig = Field(default_factory=BCSeConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
+    aws: AWSConfig = Field(default_factory=AWSConfig)
 
     @field_validator("database_url")
     @classmethod

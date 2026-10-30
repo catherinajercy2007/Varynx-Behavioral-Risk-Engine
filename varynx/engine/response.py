@@ -136,11 +136,17 @@ class AdaptiveResponseEngine:
         """
         # Policy table fallback (REQ-011.7)
         if self._policy_invalid or not self._policy:
-            logger.error("POLICY_TABLE_INVALID: Falling back to MONITOR")
+            # REQ-011.7: fall back to WARN (the "MONITOR" response) when the
+            # policy table is invalid or missing.  WARN permits the operation to
+            # proceed but signals that the policy layer is degraded; every
+            # subsequent event is still analysed by the full behavioral pipeline.
+            # Using PERMIT here was a defect -- it silently allows everything
+            # through with no indication that policy evaluation failed.
+            logger.error("POLICY_TABLE_INVALID: Falling back to WARN (MONITOR) per REQ-011.7")
             return self._make_recommendation(
                 agent_id=agent_id,
                 correlation_id=correlation_id,
-                response_type=ResponseType.PERMIT,
+                response_type=ResponseType.WARN,
                 evidence_bundle=evidence_bundle,
                 trust_state=trust_state,
                 bcse_result=bcse_result,

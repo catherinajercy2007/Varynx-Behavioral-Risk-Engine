@@ -1,0 +1,6 @@
+All 4 adapters import OK
+CW local: True | CT local: True | S3 local: True | IAM local: True
+CW methods: True
+CT methods: True True
+S3 methods: True True
+IAM methods: True

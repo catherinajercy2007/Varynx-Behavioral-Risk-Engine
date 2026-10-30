@@ -1,0 +1,3 @@
+import OK
+no alts: []
+with alts: [{'policy_id': 'p1', 'label': 'Strict', 'overrides': {'restrict_threshold': 0.1}}]

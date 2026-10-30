@@ -1,0 +1,80 @@
+=== git rev-parse --show-toplevel (RC=0) ===
+C:/Users/cathe/OneDrive/Desktop/varynx
+=== git branch --show-current (RC=0) ===
+master
+=== git status --short (RC=0) ===
+?? config_mypy.txt
+?? docs/PHASE2_EVALUATION_AUDIT.md
+?? full_suite_p2.txt
+?? lint_p2.txt
+?? ls_remote_check.txt
+?? ls_remote_err.txt
+?? push_result.txt
+?? retest_after_fix.txt
+?? ruff_final.txt
+?? stage1_diff_full.txt
+?? stage1_diff_stat.txt
+?? stage1_git_state.txt
+?? stage4_focused.txt
+?? stage4_full.txt
+?? stage4_full_real.txt
+?? stage4_lint.txt
+?? stage4_tests.txt
+?? stage7_full_staged_diff.txt
+?? step1_git.txt
+=== git status -sb (RC=0) ===
+## master...origin/varynx-project
+?? config_mypy.txt
+?? docs/PHASE2_EVALUATION_AUDIT.md
+?? full_suite_p2.txt
+?? lint_p2.txt
+?? ls_remote_check.txt
+?? ls_remote_err.txt
+?? push_result.txt
+?? retest_after_fix.txt
+?? ruff_final.txt
+?? stage1_diff_full.txt
+?? stage1_diff_stat.txt
+?? stage1_git_state.txt
+?? stage4_focused.txt
+?? stage4_full.txt
+?? stage4_full_real.txt
+?? stage4_lint.txt
+?? stage4_tests.txt
+?? stage7_full_staged_diff.txt
+?? step1_git.txt
+=== git remote -v (RC=0) ===
+origin	https://github.com/catherinajercy2007/Varynx-Behavioral-Risk-Engine.git (fetch)
+origin	https://github.com/catherinajercy2007/Varynx-Behavioral-Risk-Engine.git (push)
+=== git branch -vv (RC=0) ===
+* master 0c7d883 [origin/varynx-project] fix(eval): correct metric definedness and scenario timestamps
+=== git log -5 --oneline --decorate (RC=0) ===
+0c7d883 (HEAD -> master, origin/varynx-project) fix(eval): correct metric definedness and scenario timestamps
+1a4bcb0 chore: ignore precommit test output
+eba764a Initial baseline commit: Phase 5 complete
+=== git diff --stat (RC=0) ===
+(empty)
+=== git diff --check (RC=0) ===
+(empty)
+=== git diff --cached --stat (RC=0) ===
+(empty)
+=== git ls-files --others --exclude-standard (RC=0) ===
+config_mypy.txt
+docs/PHASE2_EVALUATION_AUDIT.md
+full_suite_p2.txt
+lint_p2.txt
+ls_remote_check.txt
+ls_remote_err.txt
+push_result.txt
+retest_after_fix.txt
+ruff_final.txt
+stage1_diff_full.txt
+stage1_diff_stat.txt
+stage1_git_state.txt
+stage4_focused.txt
+stage4_full.txt
+stage4_full_real.txt
+stage4_lint.txt
+stage4_tests.txt
+stage7_full_staged_diff.txt
+step1_git.txt

@@ -1,0 +1,27 @@
+============================= test session starts =============================
+collected 200 items
+
+tests\benchmarks\test_performance.py ...                                 [  1%]
+tests\integration\test_api_auth.py .....................                 [ 12%]
+tests\integration\test_api_routes.py ......................              [ 23%]
+tests\integration\test_audit_chain.py ...........                        [ 28%]
+tests\integration\test_enforcement_behavior.py ......................... [ 41%]
+..                                                                       [ 42%]
+tests\integration\test_escalation_phase4.py ...........................  [ 55%]
+tests\integration\test_pipeline_integration.py .............             [ 62%]
+tests\property\test_api_serialization.py ....                            [ 64%]
+tests\property\test_evidence_properties.py .......                       [ 67%]
+tests\property\test_lease_properties.py ..........                       [ 72%]
+tests\property\test_response_properties.py .......                       [ 76%]
+tests\property\test_trust_properties.py .....                            [ 78%]
+tests\unit\test_config.py ......                                         [ 81%]
+tests\unit\test_eval_metrics.py .............                            [ 88%]
+tests\unit\test_models.py ........................                       [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\cathe\OneDrive\Desktop\varynx\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 200 passed, 1 warning in 8.19s ========================

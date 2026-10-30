@@ -108,7 +108,7 @@ export default function AuditPage() {
           </thead>
           <tbody>
             {records.length === 0 ? (
-              <tr><td colSpan={5} className="p-6 text-center text-gray-400">No records. Click "Load Records" to fetch.</td></tr>
+              <tr><td colSpan={5} className="p-6 text-center text-gray-400">No records. Click &quot;Load Records&quot; to fetch.</td></tr>
             ) : records.map((r) => (
               <tr key={r.record_id} className="border-t hover:bg-gray-50">
                 <td className="p-3 text-xs text-gray-500">{new Date(r.timestamp).toLocaleString()}</td>
@@ -117,9 +117,9 @@ export default function AuditPage() {
                     {r.record_type}
                   </span>
                 </td>
-                <td className="p-3 font-mono text-xs">{r.agent_id || "—"}</td>
+                <td className="p-3 font-mono text-xs">{r.agent_id || "â€”"}</td>
                 <td className="p-3 font-mono text-xs">{r.source_entity_id.slice(0, 12)}...</td>
-                <td className="p-3 font-mono text-xs">{r.correlation_id ? r.correlation_id.slice(0, 8) + "..." : "—"}</td>
+                <td className="p-3 font-mono text-xs">{r.correlation_id ? r.correlation_id.slice(0, 8) + "..." : "â€”"}</td>
               </tr>
             ))}
           </tbody>

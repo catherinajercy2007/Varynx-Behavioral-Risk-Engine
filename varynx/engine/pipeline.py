@@ -1,4 +1,4 @@
-﻿"""Top-Level Pipeline Processor.
+"""Top-Level Pipeline Processor.
 
 Orchestrates the full behavioral analysis pipeline:
 1. Ingestion & Validation
@@ -37,6 +37,12 @@ from varynx.models.enforcement import EnforcementRecord
 from varynx.models.event import AgentActionEvent
 from varynx.models.response import ResponseRecommendation
 
+# Optional AWS integration -- imported conditionally to avoid hard dependency
+try:
+    from varynx.aws.cloudwatch_adapter import CloudWatchAdapter as _CloudWatchAdapter
+except ImportError:
+    _CloudWatchAdapter = None  # type: ignore[assignment,misc]
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,8 +66,22 @@ class VarynxPipeline:
     Satisfies: design.md Section 6 (End-to-End Data Flow)
     """
 
-    def __init__(self, config: VarynxConfig | None = None) -> None:
+    def __init__(self, config: VarynxConfig | None = None,
+                 cloudwatch_adapter=None) -> None:
         self.config = config or VarynxConfig(database_url="memory://")
+        # Optional CloudWatch integration. Never required for core operation.
+        # If caller passes an adapter explicitly, use it.
+        # Otherwise, auto-create from config when cloudwatch_enabled=True.
+        if cloudwatch_adapter is not None:
+            self._cloudwatch = cloudwatch_adapter
+        elif self.config.aws.cloudwatch_enabled:
+            try:
+                from varynx.aws.cloudwatch_adapter import CloudWatchAdapter as _CW
+                self._cloudwatch = _CW.from_aws_config(self.config.aws)
+            except Exception:
+                self._cloudwatch = None
+        else:
+            self._cloudwatch = None
 
         self.ingestion = IngestionLayer(
             past_tolerance_seconds=self.config.timestamp_past_tolerance_seconds,
@@ -249,6 +269,14 @@ class VarynxPipeline:
                 session_id=validated.session_id,
                 agent_id=validated.agent_id,
             )
+            # Optional: publish security metrics to CloudWatch.
+            # Failures are caught inside publish_pipeline_result; the pipeline
+            # continues and local audit is unaffected (REQ-027 failure isolation).
+            if self._cloudwatch is not None:
+                try:
+                    self._cloudwatch.publish_pipeline_result(result)
+                except Exception as _cw_exc:
+                    logger.warning("CloudWatch publish skipped: %s", _cw_exc)
 
         except Exception as exc:
             logger.error("Pipeline error for agent %s: %s", event.agent_id, exc, exc_info=True)

@@ -1,0 +1,249 @@
+﻿diff --git a/.kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md b/.kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md
+index 3d53132..409d3b1 100644
+--- a/.kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md
++++ b/.kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md
+@@ -1,5 +1,5 @@
+ ∩╗┐# Probe tasks file - testing parser formats
+ - [x] T1.1 Test task one [depends on: ]
+-- [ ] T1.2 Test task two [depends on: T1.1]
++- [~] T1.2 Test task two [depends on: T1.1]
+ - [ ] 1.3 Numeric id task
+ - [ ] T1.4: Colon title task [depends on: T1.1]
+diff --git a/scenarios/scope_escalation_detection.yaml b/scenarios/scope_escalation_detection.yaml
+index e725a36..e8e5e4b 100644
+--- a/scenarios/scope_escalation_detection.yaml
++++ b/scenarios/scope_escalation_detection.yaml
+@@ -1,30 +1,55 @@
+ name: scope_escalation_detection
+-description: "Scenario detecting capability escalation when agent acts outside declared scope."
+-version: "1.0"
++description: "Agent attempts operations outside its declared READ-only capability scope. Tests CAPABILITY_ESCALATION detection. H1 evaluation scenario."
++version: "1.1"
+ is_simulated: true
+ 
++# Agent is declared as READ-only.
++# Events 0-1 are benign (READ within declared scope).
++# Event 2 escalates to WRITE (outside declared READ scope).
++# Event 3 escalates to DELETE (further outside scope).
++# The detector should fire CAPABILITY_ESCALATION on events 2 and 3.
++# NOTE: Requires the agent to be registered with declared_capability_scope=["READ"]
++#       which is handled by agent_declared_scope below.
++agent_declared_capability_scope:
++  - READ
++
+ events:
+-  - agent_id: agent-eval-002
++  - agent_id: agent-scope-esc-001
+     action_type: READ
+     capability_requested: read:files
+-    target_resource: /data/allowed.csv
++    target_resource: /data/report.csv
+     authorization_result: allowed
+     expected_anomaly: null
+ 
+-  - agent_id: agent-eval-002
++  - agent_id: agent-scope-esc-001
+     action_type: READ
+     capability_requested: read:files
+-    target_resource: /data/report.csv
++    target_resource: /data/summary.csv
+     authorization_result: allowed
+     expected_anomaly: null
+ 
+-  - agent_id: agent-eval-002
++  - agent_id: agent-scope-esc-001
++    action_type: WRITE
++    capability_requested: write:files
++    target_resource: /data/admin.csv
++    authorization_result: allowed
++    expected_anomaly: CAPABILITY_ESCALATION
++
++  - agent_id: agent-scope-esc-001
++    action_type: DELETE
++    capability_requested: delete:files
++    target_resource: /data/audit_log.csv
++    authorization_result: allowed
++    expected_anomaly: CAPABILITY_ESCALATION
++
++  - agent_id: agent-scope-esc-001
+     action_type: READ
+     capability_requested: read:files
+-    target_resource: /data/output.csv
++    target_resource: /data/report.csv
+     authorization_result: allowed
+     expected_anomaly: null
+ 
+ ground_truth:
+-  total_anomalous_events: 0
+-  anomaly_event_indices: []
+\ No newline at end of file
++  total_anomalous_events: 2
++  anomaly_event_indices: [2, 3]
++  anomaly_classes: [CAPABILITY_ESCALATION, CAPABILITY_ESCALATION]
+\ No newline at end of file
+diff --git a/varynx/config.py b/varynx/config.py
+index 53e7e9e..39690db 100644
+--- a/varynx/config.py
++++ b/varynx/config.py
+@@ -1,4 +1,4 @@
+-∩╗┐"""Varynx configuration system.
++"""Varynx configuration system.
+ 
+ All behavioral thresholds and policy parameters are externally configurable
+ via environment variables (VARYNX_ prefix) and never hard-coded.
+@@ -296,7 +296,7 @@ def load_config(**overrides: Any) -> VarynxConfig:
+     try:
+         config = VarynxConfig(**overrides)
+     except ValidationError as exc:
+-        fields = ", ".join(e["loc"][0] for e in exc.errors() if e.get("loc"))  # type: ignore[index]
++        fields = ", ".join(str(e["loc"][0]) for e in exc.errors() if e.get("loc"))
+         raise ConfigurationError(f"CONFIGURATION_INVALID: {fields}") from exc
+ 
+     if not config.database_url:
+diff --git a/varynx/evaluation/runner.py b/varynx/evaluation/runner.py
+index dc2e8e2..c7ad4d2 100644
+--- a/varynx/evaluation/runner.py
++++ b/varynx/evaluation/runner.py
+@@ -48,6 +48,12 @@ class ScenarioFile:
+         self.events: list[ScenarioEvent] = [ScenarioEvent(e) for e in data.get("events", [])]
+         self.ground_truth: dict = data.get("ground_truth", {})
+         self.path = path
++        # Optional: agent capability scope declaration for escalation scenarios.
++        # When present the runner pre-registers agents with these declared capabilities
++        # so the CAPABILITY_ESCALATION detector can fire correctly.
++        self.agent_declared_capability_scope: list[str] = data.get(
++            "agent_declared_capability_scope", []
++        )
+ 
+ 
+ def load_scenario(path: pathlib.Path) -> ScenarioFile:
+@@ -65,34 +71,83 @@ def load_scenario(path: pathlib.Path) -> ScenarioFile:
+ 
+ 
+ class EvalMetrics:
+-    """Computes detection metrics from scenario run results."""
++    """Computes detection metrics from scenario run results.
++
++    Definedness semantics (per standard classification metric convention):
++
++    - precision_defined: True when at least one positive prediction exists (TP+FP > 0).
++      Precision = TP / (TP + FP).  If no predictions, precision is undefined (reported 0.0).
++
++    - recall_defined: True when at least one positive ground-truth event exists (TP+FN > 0).
++      Recall = TP / (TP + FN).  If no positive labels, recall is undefined (reported 0.0).
++
++    - f1_defined: True when positive ground-truth events exist (same condition as recall).
++      F1 = 2 * P * R / (P + R) when P+R > 0, else 0.0.
++      F1 is always undefined when there are no positive labels, even if false positives exist.
++
++    Distinguishing a genuine F1 = 0 (detector missed real anomalies) from an
++    undefined F1 (no positive labels at all) is critical for honest evaluation.
++    """
+ 
+     def __init__(self) -> None:
+         self.tp = self.fp = self.tn = self.fn = 0
+ 
++    @property
++    def precision_defined(self) -> bool:
++        """True when at least one positive prediction was made (TP + FP > 0)."""
++        return (self.tp + self.fp) > 0
++
++    @property
++    def recall_defined(self) -> bool:
++        """True when at least one positive ground-truth label exists (TP + FN > 0)."""
++        return (self.tp + self.fn) > 0
++
++    @property
++    def f1_defined(self) -> bool:
++        """True when positive ground-truth labels exist (same condition as recall_defined)."""
++        return self.recall_defined
++
++    # Legacy alias kept for backward compatibility
++    @property
++    def has_positives(self) -> bool:
++        """Alias for recall_defined / f1_defined."""
++        return self.recall_defined
++
+     def record(self, expected_anomaly: str | None, detected_anomalies: list[str]) -> None:
++        """Record one event outcome into the confusion matrix.
++
++        Args:
++            expected_anomaly: The ground-truth anomaly class for this event, or None if benign.
++            detected_anomalies: List of anomaly class strings actually detected by the pipeline.
++        """
+         if expected_anomaly:
++            # Positive ground-truth event: check exact class match
+             if expected_anomaly in detected_anomalies:
+                 self.tp += 1
+             else:
+-                self.fn += 1
++                self.fn += 1   # wrong class or missed entirely
+         else:
++            # Negative ground-truth event
+             if detected_anomalies:
+-                self.fp += 1
++                self.fp += 1   # detector fired on benign event
+             else:
+                 self.tn += 1
+ 
+     def precision(self) -> float:
+-        return self.tp / (self.tp + self.fp) if (self.tp + self.fp) > 0 else 0.0
++        """Precision = TP / (TP + FP). Returns 0.0 when undefined (no predictions)."""
++        return self.tp / (self.tp + self.fp) if self.precision_defined else 0.0
+ 
+     def recall(self) -> float:
+-        return self.tp / (self.tp + self.fn) if (self.tp + self.fn) > 0 else 0.0
++        """Recall = TP / (TP + FN). Returns 0.0 when undefined (no positive labels)."""
++        return self.tp / (self.tp + self.fn) if self.recall_defined else 0.0
+ 
+     def f1(self) -> float:
++        """F1 = harmonic mean of precision and recall. Returns 0.0 when undefined."""
+         p, r = self.precision(), self.recall()
+         return 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+ 
+     def to_dict(self) -> dict:
++        """Return the full confusion matrix and metric values as a serialisable dict."""
+         return {
+             "true_positives": self.tp,
+             "false_positives": self.fp,
+@@ -101,6 +156,10 @@ class EvalMetrics:
+             "precision": round(self.precision(), 4),
+             "recall": round(self.recall(), 4),
+             "f1_score": round(self.f1(), 4),
++            # Definedness flags ΓÇö callers MUST check these before interpreting values
++            "precision_defined": self.precision_defined,
++            "recall_defined": self.recall_defined,
++            "f1_defined": self.f1_defined,
+         }
+ 
+ 
+@@ -127,9 +186,28 @@ class ScenarioRunner:
+         errors = []
+         mismatches = []
+ 
+-        base_time = datetime.now(UTC)
++        # Use a fully fixed UTC datetime so scenario evaluation is deterministic
++        # regardless of the wall-clock date and time.  14:00 UTC is chosen so the
++        # off-hours heuristic (00:00ΓÇô06:00 UTC) does not fire spuriously on benign events,
++        # which would otherwise cause false positives in every scenario run at night.
++        # Temporal detection remains exercisable via timestamp_offset_seconds < -8*3600.
++        base_time = datetime(2024, 6, 15, 14, 0, 0, tzinfo=UTC)
+         session_id = uuid4()
+ 
++        # Pre-register agents that have declared capability scopes in the scenario.
++        # This is required for CAPABILITY_ESCALATION detection to fire correctly:
++        # the detector compares the action_type against declared_capability_scope,
++        # which is only set when the agent has been explicitly registered.
++        if scenario.agent_declared_capability_scope:
++            agent_ids = {se.agent_id for se in scenario.events}
++            for agent_id in agent_ids:
++                self.pipeline.registry.register_agent(
++                    agent_id=agent_id,
++                    owning_principal="scenario",
++                    declared_capability_scope=scenario.agent_declared_capability_scope,
++                    authorized_resource_scope=[],
++                )
++
+         for i, se in enumerate(scenario.events):
+             from datetime import timedelta
+             ts = base_time.replace(microsecond=0)

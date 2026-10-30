@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\cathe\OneDrive\Desktop\varynx\run_aws.py", line 3, in <module>
+    exec(open('write_aws.py').read())
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 1
+    ï»¿
+     ^
+SyntaxError: invalid character '»' (U+00BB)

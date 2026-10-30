@@ -180,8 +180,13 @@ class EnforcementLayer:
                 logger.debug("PERMIT for agent %s — no enforcement action", agent_id)
 
             elif response_type == ResponseType.WARN:
-                # WARN is a notification; the calling agent receives the warning
-                # via the response recommendation.  No lease change is applied.
+                # WARN signals that the agent's behaviour has triggered a policy
+                # threshold but has not yet reached restriction level.  No lease
+                # state change is made.  Effective monitoring occurs because every
+                # subsequent agent action passes through the full behavioral analysis
+                # pipeline -- evidence is collected, trust is updated, and anomalies
+                # are re-evaluated on each event.  This is the project's implemented
+                # form of ALLOW_WITH_MONITORING (REQ-011).
                 logger.info("WARN recommendation for agent %s", agent_id)
 
             return EnforcementOutcome.SUCCESS

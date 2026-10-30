@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from varynx.config import VarynxConfig, AWSConfig; c = VarynxConfig(database_url='memory://'); print('aws.enabled:', c.aws.enabled); print('aws.region:', c.aws.region); print('Config OK')
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cathe\OneDrive\Desktop\varynx\varynx\config.py", line 341
+    aws: AWSConfig = Field(default_factory=AWSConfig)
+IndentationError: unexpected indent

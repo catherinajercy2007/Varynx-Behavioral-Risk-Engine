@@ -1,0 +1,117 @@
+tests\benchmarks\test_performance.py:11:1: I001 [*] Import block is un-sorted or un-formatted
+tests\benchmarks\test_performance.py:15:8: F401 [*] `pytest` imported but unused
+tests\benchmarks\test_performance.py:19:1: E402 Module level import not at top of file
+tests\benchmarks\test_performance.py:19:1: I001 [*] Import block is un-sorted or un-formatted
+tests\benchmarks\test_performance.py:20:1: E402 Module level import not at top of file
+tests\benchmarks\test_performance.py:21:1: E402 Module level import not at top of file
+tests\benchmarks\test_performance.py:22:1: E402 Module level import not at top of file
+tests\benchmarks\test_performance.py:26:25: UP017 [*] Use `datetime.UTC` alias
+tests\benchmarks\test_performance.py:74:15: F541 [*] f-string without any placeholders
+tests\benchmarks\test_performance.py:76:15: F541 [*] f-string without any placeholders
+tests\benchmarks\test_performance.py:102:15: F541 [*] f-string without any placeholders
+tests\benchmarks\test_performance.py:109:1: I001 [*] Import block is un-sorted or un-formatted
+tests\benchmarks\test_performance.py:109:9: E401 [*] Multiple imports on one line
+tests\benchmarks\test_performance.py:112:42: UP017 [*] Use `datetime.UTC` alias
+tests\benchmarks\test_performance.py:139:96: W292 [*] No newline at end of file
+tests\integration\test_api_auth.py:22:8: F401 [*] `pytest` imported but unused
+tests\integration\test_api_auth.py:26:1: E402 Module level import not at top of file
+tests\integration\test_api_auth.py:26:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_api_auth.py:27:1: E402 Module level import not at top of file
+tests\integration\test_api_auth.py:28:1: E402 Module level import not at top of file
+tests\integration\test_api_auth.py:29:1: E402 Module level import not at top of file
+tests\integration\test_api_auth.py:37:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_api_auth.py:297:90: W292 [*] No newline at end of file
+tests\integration\test_api_routes.py:23:8: F401 [*] `pytest` imported but unused
+tests\integration\test_api_routes.py:27:1: E402 Module level import not at top of file
+tests\integration\test_api_routes.py:27:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_api_routes.py:28:1: E402 Module level import not at top of file
+tests\integration\test_api_routes.py:29:1: E402 Module level import not at top of file
+tests\integration\test_api_routes.py:30:1: E402 Module level import not at top of file
+tests\integration\test_api_routes.py:38:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_api_routes.py:360:10: W292 [*] No newline at end of file
+tests\integration\test_audit_chain.py:7:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_audit_chain.py:8:8: F401 [*] `pytest` imported but unused
+tests\integration\test_audit_chain.py:16:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_audit_chain.py:105:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_audit_chain.py:106:59: F401 [*] `varynx.models.event.ActionType` imported but unused
+tests\integration\test_audit_chain.py:106:71: F401 [*] `varynx.models.event.AuthorizationResult` imported but unused
+tests\integration\test_audit_chain.py:143:39: W292 [*] No newline at end of file
+tests\integration\test_enforcement_behavior.py:16:8: F401 [*] `pytest` imported but unused
+tests\integration\test_enforcement_behavior.py:20:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:20:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_enforcement_behavior.py:21:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:22:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:22:59: F401 [*] `varynx.models.enforcement.EnforcementRecord` imported but unused
+tests\integration\test_enforcement_behavior.py:23:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:24:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:25:1: E402 Module level import not at top of file
+tests\integration\test_enforcement_behavior.py:34:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_enforcement_behavior.py:93:69: UP037 [*] Remove quotes from type annotation
+tests\integration\test_enforcement_behavior.py:167:9: F841 Local variable `target_lease` is assigned to but never used
+tests\integration\test_enforcement_behavior.py:384:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_enforcement_behavior.py:385:59: F401 [*] `varynx.models.event.ActionType` imported but unused
+tests\integration\test_enforcement_behavior.py:385:71: F401 [*] `varynx.models.event.AuthorizationResult` imported but unused
+tests\integration\test_enforcement_behavior.py:386:41: F401 [*] `varynx.models.trust.TrustState` imported but unused
+tests\integration\test_enforcement_behavior.py:412:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_enforcement_behavior.py:412:44: F401 [*] `varynx.engine.response.AdaptiveResponseEngine` imported but unused
+tests\integration\test_enforcement_behavior.py:412:68: F401 [*] `varynx.engine.response._SEVERITY_ORDER` imported but unused
+tests\integration\test_enforcement_behavior.py:446:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_enforcement_behavior.py:447:59: F401 [*] `varynx.models.event.ActionType` imported but unused
+tests\integration\test_enforcement_behavior.py:447:71: F401 [*] `varynx.models.event.AuthorizationResult` imported but unused
+tests\integration\test_escalation_phase4.py:12:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_escalation_phase4.py:16:25: F401 [*] `uuid.UUID` imported but unused
+tests\integration\test_escalation_phase4.py:18:8: F401 [*] `pytest` imported but unused
+tests\integration\test_escalation_phase4.py:22:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:22:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_escalation_phase4.py:23:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:24:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:25:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:26:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:27:1: E402 Module level import not at top of file
+tests\integration\test_escalation_phase4.py:35:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_escalation_phase4.py:170:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_escalation_phase4.py:171:59: F401 [*] `varynx.models.event.ActionType` imported but unused
+tests\integration\test_escalation_phase4.py:171:71: F401 [*] `varynx.models.event.AuthorizationResult` imported but unused
+tests\integration\test_escalation_phase4.py:172:44: N817 CamelCase `ResponseType` imported as acronym `RT`
+tests\integration\test_escalation_phase4.py:209:44: N817 CamelCase `ResponseType` imported as acronym `RT`
+tests\integration\test_escalation_phase4.py:225:45: F401 [*] `varynx.models.audit.AuditRecordType` imported but unused
+tests\integration\test_escalation_phase4.py:233:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_escalation_phase4.py:235:44: N817 CamelCase `ResponseType` imported as acronym `RT`
+tests\integration\test_escalation_phase4.py:445:67: W292 [*] No newline at end of file
+tests\integration\test_pipeline_integration.py:8:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:10:8: F401 [*] `pytest` imported but unused
+tests\integration\test_pipeline_integration.py:16:1: E402 Module level import not at top of file
+tests\integration\test_pipeline_integration.py:16:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:17:1: E402 Module level import not at top of file
+tests\integration\test_pipeline_integration.py:18:1: E402 Module level import not at top of file
+tests\integration\test_pipeline_integration.py:18:33: F401 [*] `varynx.models.trust.TrustLevel` imported but unused
+tests\integration\test_pipeline_integration.py:19:1: E402 Module level import not at top of file
+tests\integration\test_pipeline_integration.py:20:1: E402 Module level import not at top of file
+tests\integration\test_pipeline_integration.py:20:39: F401 [*] `varynx.models.enforcement.EnforcementOutcome` imported but unused
+tests\integration\test_pipeline_integration.py:24:25: UP017 [*] Use `datetime.UTC` alias
+tests\integration\test_pipeline_integration.py:126:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:127:41: F401 [*] `varynx.engine.trust.classify_trust_level` imported but unused
+tests\integration\test_pipeline_integration.py:130:9: F841 Local variable `config` is assigned to but never used
+tests\integration\test_pipeline_integration.py:155:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:157:41: F401 [*] `varynx.models.trust.TrustState` imported but unused
+tests\integration\test_pipeline_integration.py:157:53: F811 [*] Redefinition of unused `TrustLevel` from line 18
+tests\integration\test_pipeline_integration.py:157:53: F401 [*] `varynx.models.trust.TrustLevel` imported but unused
+tests\integration\test_pipeline_integration.py:194:9: F841 Local variable `r2` is assigned to but never used
+tests\integration\test_pipeline_integration.py:262:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:291:1: I001 [*] Import block is un-sorted or un-formatted
+tests\integration\test_pipeline_integration.py:329:36: W292 [*] No newline at end of file
+tests\property\test_lease_properties.py:76:9: E741 Ambiguous variable name: `l`
+tests\property\test_lease_properties.py:95:5: F841 Local variable `lease` is assigned to but never used
+tests\unit\test_models.py:174:9: E741 Ambiguous variable name: `l`
+varynx\api\app.py:92:5: N806 Variable `API_PREFIX` in function should be lowercase
+varynx\api\middleware.py:129:40: W292 [*] No newline at end of file
+varynx\api\routes\agents.py:55:39: E741 Ambiguous variable name: `l`
+varynx\api\routes\health.py:56:37: E741 Ambiguous variable name: `l`
+varynx\api\routes\sessions.py:76:21: E741 Ambiguous variable name: `l`
+varynx\api\routes\sessions.py:77:60: E741 Ambiguous variable name: `l`
+varynx\engine\audit.py:100:13: F841 Local variable `prior_hash_in_record` is assigned to but never used
+varynx\engine\lease_manager.py:197:19: E741 Ambiguous variable name: `l`
+varynx\engine\lease_manager.py:227:23: E741 Ambiguous variable name: `l`
+varynx\engine\pipeline.py:220:48: N814 Camelcase `ResponseType` imported as constant `_RT`
+Found 115 errors.
+[*] 68 fixable with the `--fix` option (5 hidden fixes can be enabled with the `--unsafe-fixes` option).

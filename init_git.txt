@@ -1,0 +1,5 @@
+c7a2c0b docs: add Phase 2 verification and evaluation audit report
+0c7d883 fix(eval): correct metric definedness and scenario timestamps
+1a4bcb0 chore: ignore precommit test output
+eba764a Initial baseline commit: Phase 5 complete
+

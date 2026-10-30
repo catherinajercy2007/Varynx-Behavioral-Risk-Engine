@@ -1,0 +1,58 @@
+=== git status -sb ===
+## master...origin/varynx-project
+?? config_mypy.txt
+?? final_git.txt
+?? final_git_err.txt
+?? final_verify.txt
+?? final_verify_err.txt
+?? full_suite_p2.txt
+?? lint_p2.txt
+?? ls_remote_check.txt
+?? ls_remote_err.txt
+?? p2_bcse.txt
+?? p2_bcse_err.txt
+?? p2_pi_err.txt
+?? p2_property_integ.txt
+?? push_err_s10.txt
+?? push_result.txt
+?? push_result_s10.txt
+?? retest_after_fix.txt
+?? ruff_final.txt
+?? s1_full.txt
+?? s2_err.txt
+?? s2_tests_raw.txt
+?? s2_verbose.txt
+?? s2_verbose_err.txt
+?? s3_eval_err.txt
+?? s3_eval_tests.txt
+?? s4_mypy.txt
+?? s4_mypy_err.txt
+?? s4_mypy_ex_err.txt
+?? s4_mypy_existing.txt
+?? s4_mypy_tc.txt
+?? s4_mytc_err.txt
+?? s4_ruff.txt
+?? s4_ruff_changed.txt
+?? s4_ruff_changed_err.txt
+?? s4_ruff_err.txt
+?? s4_ruff_py_err.txt
+?? s4_ruff_py_only.txt
+?? stage1_diff_full.txt
+?? stage1_diff_stat.txt
+?? stage1_git_state.txt
+?? stage2_full_tests.txt
+?? stage4_focused.txt
+?? stage4_full.txt
+?? stage4_full_real.txt
+?? stage4_lint.txt
+?? stage4_tests.txt
+?? stage7_full_staged_diff.txt
+?? step1_git.txt
+=== git log -3 --oneline --decorate ===
+c7a2c0b (HEAD -> master, origin/varynx-project) docs: add Phase 2 verification and evaluation audit report
+0c7d883 fix(eval): correct metric definedness and scenario timestamps
+1a4bcb0 chore: ignore precommit test output
+=== git rev-parse HEAD ===
+c7a2c0b960dbfce6cdf1bdd2b7faeac6733c5508
+=== git rev-parse @{u} ===
+c7a2c0b960dbfce6cdf1bdd2b7faeac6733c5508

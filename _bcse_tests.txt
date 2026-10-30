@@ -1,0 +1,9 @@
+============================= test session starts =============================
+collecting ... collected 22 items / 18 deselected / 4 selected
+
+tests/integration/test_api_routes.py::TestBcseEvaluate::test_bcse_evaluate_returns_200_with_stub_result PASSED [ 25%]
+tests/integration/test_api_routes.py::TestBcseEvaluate::test_bcse_evaluate_missing_field_returns_422 PASSED [ 50%]
+tests/integration/test_api_routes.py::TestBcseEvaluate::test_bcse_evaluate_is_non_destructive PASSED [ 75%]
+tests/integration/test_api_routes.py::TestBcseEvaluate::test_bcse_low_history_warning_when_no_prior_events PASSED [100%]
+
+====================== 4 passed, 18 deselected in 2.95s =======================

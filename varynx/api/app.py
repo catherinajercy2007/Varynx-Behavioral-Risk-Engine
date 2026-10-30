@@ -56,6 +56,16 @@ def create_app(config: VarynxConfig | None = None) -> FastAPI:
     if config is None:
         config = VarynxConfig()
 
+    # Production auth guard (REQ-016.3): when require_api_key=True the application
+    # must not start without a key.  This is an explicit opt-in so local development
+    # (where api_key is intentionally absent) continues to work unchanged.
+    if config.require_api_key and not config.api_key:
+        raise ValueError(
+            "VARYNX_REQUIRE_API_KEY is True but VARYNX_API_KEY is not set. "
+            "Set VARYNX_API_KEY before starting the application, or set "
+            "VARYNX_REQUIRE_API_KEY=false to allow unauthenticated local access."
+        )
+
     app = FastAPI(
         title="Varynx Behavioral Risk Control Engine",
         description=(

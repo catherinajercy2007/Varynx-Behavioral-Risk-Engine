@@ -1,0 +1,2 @@
+error: Failed to parse scenarios\benign_agent_no_false_alarms.yaml:6:8: Expected an expression
+error: Failed to parse scenarios\scope_escalation_detection.yaml:13:33: Expected an expression

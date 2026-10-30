@@ -1,0 +1,6 @@
+scenarios\benign_agent_no_false_alarms.yaml:6:8: E999 SyntaxError: Expected an expression
+scenarios\benign_agent_no_false_alarms.yaml:31:107: W292 [*] No newline at end of file
+scenarios\scope_escalation_detection.yaml:13:33: E999 SyntaxError: Expected an expression
+scenarios\scope_escalation_detection.yaml:55:66: W292 [*] No newline at end of file
+Found 4 errors.
+[*] 2 fixable with the `--fix` option.

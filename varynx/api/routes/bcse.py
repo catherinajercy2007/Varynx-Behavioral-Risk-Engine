@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from varynx.api.schemas import error_response, success_response
-from varynx.models.bcse import BCSeContext
+from varynx.models.bcse import BCSeContext, PolicyAlternative
 from varynx.models.event import ActionType, AgentActionEvent, AuthorizationResult
 from varynx.models.evidence import EvidenceBundle
 from varynx.models.trust import TrustLevel, TrustState
@@ -28,6 +28,9 @@ class BCSeEvaluateRequest(BaseModel):
     proposed_resource_scope: str
     session_id: UUID
     capability_requested: str = "evaluate"
+    # When supplied, Phase 2 engine runs; returns is_stub=False with counterfactuals.
+    # When omitted, Phase 1 stub runs; returns is_stub=True.
+    alternative_policies: list[dict] = []
 
 @router.post("/bcse/evaluate", summary="Submit a proposed action for BCSE evaluation")
 async def bcse_evaluate(body: BCSeEvaluateRequest, request: Request):
@@ -76,6 +79,10 @@ async def bcse_evaluate(body: BCSeEvaluateRequest, request: Request):
         "evidence_bundle": empty_bundle.model_dump(),
         "trust_state": trust_state.model_dump(),
         "active_policy_id": pipeline.response_engine._policy_id,
+        "alternative_policies": [
+            PolicyAlternative.model_validate(a, strict=False).model_dump()
+            for a in body.alternative_policies
+        ],
     }, strict=False)
 
     try:

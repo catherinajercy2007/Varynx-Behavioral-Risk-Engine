@@ -1,0 +1,1 @@
+VARYNX_API_KEY not set — API authentication is DISABLED. This is acceptable for local development only; do not deploy without setting VARYNX_API_KEY.

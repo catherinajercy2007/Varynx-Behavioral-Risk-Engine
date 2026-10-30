@@ -1,0 +1,36 @@
+=== git rev-parse --show-toplevel ===
+C:/Users/cathe/OneDrive/Desktop/varynx
+
+=== git branch --show-current ===
+master
+
+=== git remote -v ===
+origin	https://github.com/catherinajercy2007/Varynx-Behavioral-Risk-Engine.git (fetch)
+origin	https://github.com/catherinajercy2007/Varynx-Behavioral-Risk-Engine.git (push)
+
+=== git branch -vv ===
+* master 1a4bcb0 [origin/varynx-project] chore: ignore precommit test output
+
+=== git log -5 --oneline --decorate ===
+1a4bcb0 (HEAD -> master, origin/varynx-project) chore: ignore precommit test output
+eba764a Initial baseline commit: Phase 5 complete
+
+=== git status --short ===
+ M .kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md
+ M scenarios/scope_escalation_detection.yaml
+ M varynx/config.py
+ M varynx/evaluation/runner.py
+?? full_suite_p2.txt
+?? lint_p2.txt
+?? ls_remote_err.txt
+?? scenarios/benign_agent_no_false_alarms.yaml
+?? step1_git.txt
+?? tests/unit/test_eval_metrics.py
+
+=== git ls-files --others --exclude-standard ===
+full_suite_p2.txt
+lint_p2.txt
+ls_remote_err.txt
+scenarios/benign_agent_no_false_alarms.yaml
+step1_git.txt
+tests/unit/test_eval_metrics.py

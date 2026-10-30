@@ -1,0 +1,22 @@
+﻿=== git branch ===
+master
+=== git log -1 ===
+1a4bcb0 chore: ignore precommit test output
+=== git status --short ===
+ M .kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md
+ M scenarios/scope_escalation_detection.yaml
+ M varynx/config.py
+ M varynx/evaluation/runner.py
+?? ls_remote_err.txt
+?? scenarios/benign_agent_no_false_alarms.yaml
+?? tests/unit/test_eval_metrics.py
+=== git diff --stat ===
+warning: in the working copy of '.kiro/specs/varynx-behavioral-risk-engine/tasks_probe.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scenarios/scope_escalation_detection.yaml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'varynx/config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'varynx/evaluation/runner.py', LF will be replaced by CRLF the next time Git touches it
+ .../varynx-behavioral-risk-engine/tasks_probe.md   |  2 +-
+ scenarios/scope_escalation_detection.yaml          | 45 +++++++++++++++++-----
+ varynx/config.py                                   |  4 +-
+ varynx/evaluation/runner.py                        | 39 ++++++++++++++++++-
+ 4 files changed, 75 insertions(+), 15 deletions(-)

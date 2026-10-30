@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\cathe\OneDrive\Desktop\varynx\dashboard\_ver.py", line 2, in <module>
+    from varynx.config import VarynxConfig
+ModuleNotFoundError: No module named 'varynx'

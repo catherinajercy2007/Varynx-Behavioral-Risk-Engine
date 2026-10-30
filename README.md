@@ -4,11 +4,16 @@
 
 A cloud-native behavioral risk control engine that monitors, analyzes, and responds to behavioral anomalies in autonomous AI agents. Varynx captures behavioral evidence, maintains dynamic trust profiles per agent, evaluates proposed actions via BCSE, and emits structured security recommendations to enforcement infrastructure.
 
-## Phase 1 MVP Status
+## Current Status
 
-All 47 Phase 1 tasks implemented and verified. 90 tests passing.
+**329 tests passing** (full suite, Python 3.13.1, verified 2025).
 
-**Note:** BCSE and Predictive Intelligence components are Phase 1 stubs. Phase 2 will implement full counterfactual analysis and trajectory prediction.
+- BCSE Phase 2 full engine implemented: evaluates PolicyAlternatives, computes divergence scores.
+- Predictive Phase 2 full engine implemented: OLS regression over TrustHistoryEntry with correct 95% CI.
+- API-key authentication middleware implemented and tested.
+- 12 AWS service adapters implemented (LOCAL_MODE by default; no real AWS calls without credentials).
+- Live AWS integration and production deployment **not verified** — mocked tests only.
+- H3/H4 hypothesis evaluation deferred: additional scenario coverage required.
 
 ---
 
@@ -31,7 +36,7 @@ pip install -e ".[dev]"
 ## Running Tests
 
 ```bash
-# Full test suite (90 tests)
+# Full test suite (329 tests)
 pytest tests/ -q
 
 # Unit tests only
@@ -50,12 +55,24 @@ pytest tests/benchmarks/ -v -s
 ## Running the API Server
 
 ```bash
-# Set required environment variable
-export VARYNX_DATABASE_URL=postgresql://user:pass@localhost/varynx  # or memory://dev for in-memory
+# Required
+export VARYNX_DATABASE_URL=memory://dev   # or postgresql://user:pass@host/varynx
 
-# Start server
-uvicorn varynx.api.app:app --host 0.0.0.0 --port 8000 --reload
+# Authentication — local development (optional)
+# Leave VARYNX_API_KEY unset. Every request is allowed; a WARNING is logged at startup.
+
+# Authentication — protected deployment (required before any public exposure)
+export VARYNX_API_KEY=your-secret-api-key   # clients must send X-API-Key: <key>
+export VARYNX_REQUIRE_API_KEY=true          # startup fails if key is missing
+
+# Start server (bind to localhost for local dev)
+uvicorn varynx.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+> **Security note — protected deployments**: Setting `VARYNX_REQUIRE_API_KEY=true` causes
+> the application to refuse to start if `VARYNX_API_KEY` is not set, preventing accidental
+> unauthenticated exposure. Do not bind to `0.0.0.0` without configuring `VARYNX_API_KEY`
+> and placing the application behind a TLS-terminating reverse proxy.
 
 API documentation: http://localhost:8000/api/v1/docs
 
@@ -105,32 +122,41 @@ alembic upgrade head
 ```
 REST API (FastAPI) → Ingestion → Identity Registry → Lease Manager
                   → Evidence Engine (6 detectors) → Trust Scorer
-                  → BCSE (Phase 1 stub) → Predictive (Phase 1 stub)
+                  → BCSE (Phase 2 full engine) → Predictive (Phase 2 full engine)
                   → Adaptive Response Engine → Enforcement Layer
                   → Audit Store (SHA-256 hash chain)
+                  → AWS Adapters (CloudWatch metrics, S3 exports, CloudTrail ingest)
 ```
 
 ## Research Integrity
 
 - All metrics are computed from actual pipeline outputs on scenario inputs
 - No performance benchmarks are pre-claimed (T12.4 measures actual in-memory performance)
-- Hypotheses H1–H4 require Phase 2 components and more scenario coverage for full evaluation
+- Hypotheses H1–H4 require additional scenario coverage for full evaluation
 - All thresholds and scoring weights require empirical calibration
 
 ## Known Limitations
 
 - **In-memory storage only** — no persistent PostgreSQL integration for event/trust storage
-- **BCSE Phase 1 stub** — no counterfactual analysis; H3 evaluation deferred to Phase 2
-- **Predictive stub** — always returns STABLE trajectory; H4 evaluation deferred to Phase 2
-- **Synthetic scenarios only** — 2 scenarios available; H1–H4 require more coverage
+- **BCSE Phase 2** — counterfactual engine implemented; H3 evaluation requires more scenario coverage
+- **Predictive Phase 2** — OLS regression engine implemented; H4 evaluation requires more scenario coverage
+- **Synthetic scenarios only** — 3 scenarios available; H1–H4 require broader coverage
 - **Performance benchmarks** — measured in-memory only; DB-backed performance unverified
-- **Authentication** — middleware placeholder; production requires real auth
+- **Authentication** — API-key middleware implemented and tested (329 tests). Set `VARYNX_API_KEY`
+  and `VARYNX_REQUIRE_API_KEY=true` for protected deployments. Local development with no key is
+  intentionally permitted with a logged warning. JWT/Cognito integration is not implemented.
+- **AWS integration** — 12 AWS service adapters implemented. All run in LOCAL_MODE by default;
+  no real AWS calls are made without credentials. **Live AWS integration is not verified** — mocked
+  tests only. See `varynx/aws/` for adapter modules.
+- **Production deployment** — not verified; no ECS/Fargate tasks have been deployed.
+  See `varynx/aws/github_oidc.py` for a CI/CD workflow template (OIDC, ECR, ECS).
 - **TimescaleDB** — migration written but not executable without a live DB instance
+- **Dashboard build** — requires Node.js 18+ and compatible Next.js version
 
 ## Directory Structure
 
 ```
-varynx/           Python package (engine, models, api, evaluation, config)
+varynx/           Python package (engine, models, api, evaluation, aws, config)
 tests/            pytest suite (unit, property, integration, benchmarks)
 scenarios/        YAML scenario files for evaluation
 config/           Policy and threshold YAML files
