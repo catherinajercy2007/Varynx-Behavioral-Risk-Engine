@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Varynx Security Review",
+      "description": "Review security-sensitive code changes.",
+      "enabled": true,
+      "trigger": "PostFileSave",
+      "matcher": "^(app|tests)/.*\\.py$",
+      "action": {
+        "type": "prompt",
+        "prompt": "Review the changed Varynx Python file for identity validation, authorization, policy enforcement, lease expiration, behavioral risk, privilege escalation, and audit consistency. Report concrete findings, severity, and file locations. Do not modify files."
+      }
+    }
+  ]
+}

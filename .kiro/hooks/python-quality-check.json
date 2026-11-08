@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Python Quality Check",
+      "trigger": "PostFileSave",
+      "action": {
+        "type": "command",
+        "command": ".\\.venv\\Scripts\\python.exe -m ruff check app tests"
+      },
+      "description": "Automatically run Ruff lint checks after Python files are saved.",
+      "matcher": "^(app|tests)/.*\\.py$",
+      "timeout": 60,
+      "enabled": true
+    }
+  ]
+}

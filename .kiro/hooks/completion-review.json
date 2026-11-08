@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Varynx Completion Review",
+      "description": "Verify implementation and testing evidence before task completion.",
+      "enabled": true,
+      "trigger": "Stop",
+      "action": {
+        "type": "prompt",
+        "prompt": "Before completing the task, report implemented changes, modified files, tests actually executed, test results, failures, security implications, documentation changes, and unresolved limitations. Never claim unexecuted tests passed or claim simulated integrations are production-ready."
+      }
+    }
+  ]
+}
