@@ -21,7 +21,7 @@ from pathlib import Path
 from uuid import UUID
 
 from varynx.config import VarynxConfig
-from varynx.engine.audit import AuditStore, CorrelationTracer
+from varynx.engine.audit import AuditStore, CorrelationTracer, SQLiteAuditStore
 from varynx.engine.bcse import BCSeEngine
 from varynx.engine.enforcement import EnforcementLayer
 from varynx.engine.evidence import EvidenceEngine
@@ -29,13 +29,19 @@ from varynx.engine.ingestion import IngestionLayer
 from varynx.engine.lease_manager import LeaseManager
 from varynx.engine.prediction import PredictiveEngine
 from varynx.engine.registry import IdentitySessionRegistry
+from varynx.engine.resource_gateway import (
+    ResourceOperationRequest,
+    ResourceOperationResult,
+    SimulatedResourceGateway,
+    SQLiteIdempotencyStore,
+)
 from varynx.engine.response import AdaptiveResponseEngine
 from varynx.engine.trust import TrustScorer
 from varynx.models.audit import AuditRecordType
 from varynx.models.bcse import BCSeContext
 from varynx.models.enforcement import EnforcementRecord
 from varynx.models.event import AgentActionEvent
-from varynx.models.response import ResponseRecommendation
+from varynx.models.response import ResponseRecommendation, ResponseType
 
 # Optional AWS integration -- imported conditionally to avoid hard dependency
 try:
@@ -67,7 +73,9 @@ class VarynxPipeline:
     """
 
     def __init__(self, config: VarynxConfig | None = None,
-                 cloudwatch_adapter=None) -> None:
+                 cloudwatch_adapter=None,
+                 simulated_resources: dict | None = None,
+                 persistence_path: str | Path | None = None) -> None:
         self.config = config or VarynxConfig(database_url="memory://")
         # Optional CloudWatch integration. Never required for core operation.
         # If caller passes an adapter explicitly, use it.
@@ -76,8 +84,8 @@ class VarynxPipeline:
             self._cloudwatch = cloudwatch_adapter
         elif self.config.aws.cloudwatch_enabled:
             try:
-                from varynx.aws.cloudwatch_adapter import CloudWatchAdapter as _CW
-                self._cloudwatch = _CW.from_aws_config(self.config.aws)
+                from varynx.aws.cloudwatch_adapter import CloudWatchAdapter as _CloudWatchAdapter
+                self._cloudwatch = _CloudWatchAdapter.from_aws_config(self.config.aws)
             except Exception:
                 self._cloudwatch = None
         else:
@@ -87,8 +95,11 @@ class VarynxPipeline:
             past_tolerance_seconds=self.config.timestamp_past_tolerance_seconds,
             future_tolerance_seconds=self.config.timestamp_future_tolerance_seconds,
         )
-        self.registry = IdentitySessionRegistry()
-        self.lease_manager = LeaseManager()
+        self._persistence_path = Path(persistence_path) if persistence_path else None
+        if self._persistence_path is not None:
+            self._persistence_path.mkdir(parents=True, exist_ok=True)
+        self.registry = IdentitySessionRegistry(self._persistence_path)
+        self.lease_manager = LeaseManager(self._persistence_path)
         self.evidence_engine = EvidenceEngine(config=self.config.evidence)
         self.trust_scorer = TrustScorer(config=self.config.trust)
         self.bcse_engine = BCSeEngine(config=self.config.bcse)
@@ -104,8 +115,77 @@ class VarynxPipeline:
             dry_run=self.config.dry_run_mode,
             lease_manager=self.lease_manager,
         )
-        self.audit_store = AuditStore()
+        if self._persistence_path is not None:
+            self.audit_store = SQLiteAuditStore(
+                str(self._persistence_path / "audit.sqlite3")
+            )
+            self.idempotency_store = SQLiteIdempotencyStore(
+                str(self._persistence_path / "idempotency.sqlite3")
+            )
+        else:
+            self.audit_store = AuditStore()
+            self.idempotency_store = None
+
+        self.resource_gateway = SimulatedResourceGateway(
+            lease_manager=self.lease_manager,
+            audit_store=self.audit_store,
+            resources=simulated_resources,
+            idempotency_store=self.idempotency_store,
+        )
         self.tracer = CorrelationTracer(self.audit_store)
+
+    def execute_resource_operation(
+        self,
+        request: ResourceOperationRequest,
+        recommendation: ResponseRecommendation,
+    ) -> ResourceOperationResult:
+        """Execute a simulated resource operation after behavioral analysis.
+
+        The recommendation must belong to the same agent, correlation, capability,
+        and resource as the operation. Only PERMIT and WARN are execution-permitting
+        decisions; WARN remains monitored by the normal event pipeline. All other
+        response types fail closed. The gateway independently rechecks the lease.
+        """
+        operation_prefix = {
+            "READ": "read:",
+            "WRITE": "write:",
+            "DELETE": "delete:",
+        }[request.operation.value]
+        operation_capability_matches = request.capability.lower().startswith(
+            operation_prefix
+        )
+        identity_matches = (
+            recommendation.agent_id == request.agent_id
+            and recommendation.correlation_id == request.correlation_id
+            and recommendation.target_capability == request.capability
+            and recommendation.target_resource == request.target_resource
+        )
+        behavior_permits = (
+            identity_matches
+            and operation_capability_matches
+            and recommendation.response_type in (ResponseType.PERMIT, ResponseType.WARN)
+        )
+
+        # Record the behavioral decision before the gateway can mutate state.
+        self.audit_store.append(
+            record_type=AuditRecordType.ENFORCEMENT_APPLIED,
+            source_entity_id=str(request.request_id),
+            payload={
+                "stage": "BEHAVIORAL_DECISION",
+                "recommendation_id": str(recommendation.recommendation_id),
+                "response_type": recommendation.response_type.value,
+                "identity_matches": identity_matches,
+                "operation_capability_matches": operation_capability_matches,
+                "behavioral_permit": behavior_permits,
+            },
+            correlation_id=request.correlation_id,
+            session_id=request.session_id,
+            agent_id=request.agent_id,
+        )
+        return self.resource_gateway.execute(
+            request,
+            behavioral_permit=behavior_permits,
+        )
 
     def process_event(
         self,
@@ -137,6 +217,7 @@ class VarynxPipeline:
                 agent_id=validated.agent_id,
                 capability=validated.capability_requested,
                 target_resource=validated.target_resource,
+                session_id=validated.session_id,
             )
 
             # Step 5: Behavioral Evidence Engine
@@ -237,8 +318,8 @@ class VarynxPipeline:
                 "action": enforcement_record.action_taken,
                 "dry_run": enforcement_record.dry_run,
             }
-            from varynx.models.response import ResponseType as _RT
-            if recommendation.response_type == _RT.ESCALATE:
+            from varynx.models.response import ResponseType as _ResponseType
+            if recommendation.response_type == _ResponseType.ESCALATE:
                 escalation_entry = self.enforcement_layer.get_pending_escalation(
                     recommendation.recommendation_id
                 )
@@ -283,3 +364,17 @@ class VarynxPipeline:
             result.error = str(exc)
 
         return result
+
+    def close(self) -> None:
+        """Close opt-in persistent stores.
+
+        Call during graceful application shutdown. In-memory stores require no
+        explicit cleanup.
+        """
+        self.registry.close()
+        self.lease_manager.close()
+        if self.idempotency_store is not None:
+            self.idempotency_store.close()
+        close_audit = getattr(self.audit_store, "close", None)
+        if callable(close_audit):
+            close_audit()

@@ -5,15 +5,16 @@ Verifies append-only behavior, tamper detection, and provenance query.
 Satisfies: T12.2, REQ-013, REQ-014
 """
 from __future__ import annotations
-import pytest
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from uuid import uuid4
+
 from varynx.engine.audit import AuditStore, CorrelationTracer
 from varynx.models.audit import AuditRecord, AuditRecordType
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class TestAuditChainIntegrity:
@@ -103,7 +104,7 @@ class TestAuditChainIntegrity:
         import os
         os.environ.setdefault("VARYNX_DATABASE_URL", "memory://test")
         from varynx.engine.pipeline import VarynxPipeline
-        from varynx.models.event import AgentActionEvent, ActionType, AuthorizationResult
+        from varynx.models.event import AgentActionEvent
         pipeline = VarynxPipeline()
         for i in range(5):
             event = AgentActionEvent.model_validate({
@@ -141,3 +142,36 @@ class TestAuditChainIntegrity:
         assert r.session_id == sid
         assert r.agent_id == "agent-001"
         assert r.correlation_id == cid
+
+    def test_tampered_prior_record_hash_is_detected(self):
+        """Changing a record's previous-hash link must invalidate the chain."""
+        store = AuditStore()
+
+        store.append(
+            record_type=AuditRecordType.EVENT_INGESTED,
+            source_entity_id="event-1",
+            payload={"action": "read"},
+        )
+        store.append(
+            record_type=AuditRecordType.TRUST_UPDATED,
+            source_entity_id="agent-1",
+            payload={"score": 0.8},
+        )
+
+        second_record = store._records[1]
+        tampered_record = AuditRecord.model_validate(
+            {
+                **second_record.model_dump(mode="json"),
+                "prior_record_hash": "tampered-link",
+            },
+            strict=False,
+        )
+        store._records[1] = tampered_record
+
+        valid, violations = store.verify_chain()
+
+        assert valid is False
+        assert any(
+            "prior_record_hash" in violation
+            for violation in violations
+        )
