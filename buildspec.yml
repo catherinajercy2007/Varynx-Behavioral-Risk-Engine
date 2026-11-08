@@ -9,10 +9,10 @@ phases:
     commands:
       - echo "Preparing Varynx container builds..."
       - test -n "$AWS_DEFAULT_REGION" || (echo "AWS_DEFAULT_REGION is missing" && exit 1)
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
-      - IMAGE_TAG="${IMAGE_TAG:0:12}"
+      - export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - export REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      - export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+      - export IMAGE_TAG="${IMAGE_TAG:0:12}"
       - echo "AWS account: $ACCOUNT_ID"
       - echo "AWS region: $AWS_DEFAULT_REGION"
       - echo "Image tag: $IMAGE_TAG"
