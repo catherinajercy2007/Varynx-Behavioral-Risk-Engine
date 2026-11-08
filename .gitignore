@@ -89,3 +89,21 @@ dep_verify_out.txt
 TASK52B_STATE.txt
 /PRECOMMIT_FILELIST.txt
 precommit_test_result.txt
+
+# Additional Python tooling
+.ruff_cache/
+.tox/
+.nox/
+
+# Additional test outputs
+coverage/
+*.coverage
+.coverage.*
+
+# Environment files
+.env.*
+!.env.example
+
+# Playwright test outputs
+playwright-report/
+test-results/
