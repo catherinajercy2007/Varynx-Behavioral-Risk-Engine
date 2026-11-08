@@ -1,0 +1,14 @@
+﻿{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "disabled": false
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "disabled": false,
+      "disabledTools": []
+    }
+  }
+}

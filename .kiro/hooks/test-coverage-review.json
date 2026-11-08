@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Varynx Test Coverage Review",
+      "description": "Review test coverage and regression risks.",
+      "enabled": true,
+      "trigger": "PostFileSave",
+      "matcher": "^tests/.*\\.py$",
+      "action": {
+        "type": "prompt",
+        "prompt": "Review the modified tests for positive cases, negative cases, invalid leases, authorization failures, risk boundaries, adaptive responses, idempotency, replay conflicts, and audit consistency. Identify missing tests. Do not fabricate test results or modify files."
+      }
+    }
+  ]
+}
