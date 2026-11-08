@@ -1,0 +1,53 @@
+# Git
+.git/
+.github/
+
+# Python environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Python testing and caches
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Node.js and Next.js
+node_modules/
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+dashboard/.env.local
+dashboard/.env*.local
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files and logs
+*.log
+*.bak
+*_out.txt
+AUDIT_*.txt
+BACKUP_*.txt
+SECRET_SCAN.txt
+TEST_RESULTS.txt
+
+# Generated outputs
+output/
+results/
+coverage/
