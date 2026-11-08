@@ -11,15 +11,21 @@ phases:
         set -euo pipefail
 
         echo "======================================"
-        echo "VARYNX - PREPARING CONTAINER BUILDS"
+        echo "VARYNX CONTAINER BUILD - PREPARATION"
         echo "======================================"
 
         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        AWS_REGION="${AWS_DEFAULT_REGION}"
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
         REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
         IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
         IMAGE_TAG="${IMAGE_TAG:0:12}"
+
+        BACKEND_REPOSITORY="varynx-backend"
+        FRONTEND_REPOSITORY="varynx-streamlit"
+
+        BACKEND_IMAGE="${REGISTRY}/${BACKEND_REPOSITORY}"
+        FRONTEND_IMAGE="${REGISTRY}/${FRONTEND_REPOSITORY}"
 
         echo "AWS Account: ${ACCOUNT_ID}"
         echo "AWS Region: ${AWS_REGION}"
@@ -32,55 +38,64 @@ phases:
 
         echo "ECR login successful."
 
-        echo "Checking ECR repositories..."
-
-        aws ecr describe-repositories \
-          --repository-names varynx-backend varynx-streamlit \
-          --region "$AWS_REGION"
-
   build:
     commands:
       - |
         set -euo pipefail
 
         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
         IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
         IMAGE_TAG="${IMAGE_TAG:0:12}"
+
+        BACKEND_IMAGE="${REGISTRY}/varynx-backend"
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
 
         echo "======================================"
         echo "BUILDING VARYNX BACKEND"
         echo "======================================"
 
-        test -f Dockerfile
+        if [ ! -f Dockerfile ]; then
+          echo "ERROR: Root Dockerfile not found."
+          exit 1
+        fi
 
         docker build \
           --file Dockerfile \
-          --tag "$REGISTRY/varynx-backend:$IMAGE_TAG" \
+          --tag "${BACKEND_IMAGE}:${IMAGE_TAG}" \
           .
 
-        echo "Backend image built successfully."
+        echo "Backend image built."
 
         echo "======================================"
         echo "BUILDING VARYNX STREAMLIT FRONTEND"
         echo "======================================"
 
-        test -f dashboard_streamlit/Dockerfile
+        if [ ! -f dashboard_streamlit/Dockerfile ]; then
+          echo "ERROR: dashboard_streamlit/Dockerfile not found."
+          exit 1
+        fi
+
+        if [ ! -f dashboard_streamlit/app.py ]; then
+          echo "ERROR: dashboard_streamlit/app.py not found."
+          exit 1
+        fi
 
         docker build \
           --file dashboard_streamlit/Dockerfile \
-          --tag "$REGISTRY/varynx-streamlit:$IMAGE_TAG" \
+          --tag "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
           .
 
-        echo "Streamlit image built successfully."
+        echo "Streamlit image built."
 
         echo "======================================"
-        echo "VERIFYING BUILT IMAGES"
+        echo "VERIFYING DOCKER IMAGES"
         echo "======================================"
 
-        docker image inspect "$REGISTRY/varynx-backend:$IMAGE_TAG"
-        docker image inspect "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
+        docker image inspect "${BACKEND_IMAGE}:${IMAGE_TAG}" > /dev/null
+        docker image inspect "${FRONTEND_IMAGE}:${IMAGE_TAG}" > /dev/null
 
         echo "Both Docker images verified successfully."
 
@@ -90,44 +105,46 @@ phases:
         set -euo pipefail
 
         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
         IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
         IMAGE_TAG="${IMAGE_TAG:0:12}"
 
+        BACKEND_IMAGE="${REGISTRY}/varynx-backend"
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
+
         echo "======================================"
-        echo "PUSHING VARYNX BACKEND TO ECR"
+        echo "PUSHING BACKEND IMAGE"
         echo "======================================"
 
-        docker push "$REGISTRY/varynx-backend:$IMAGE_TAG"
+        docker push "${BACKEND_IMAGE}:${IMAGE_TAG}"
 
         docker tag \
-          "$REGISTRY/varynx-backend:$IMAGE_TAG" \
-          "$REGISTRY/varynx-backend:latest"
+          "${BACKEND_IMAGE}:${IMAGE_TAG}" \
+          "${BACKEND_IMAGE}:latest"
 
-        docker push "$REGISTRY/varynx-backend:latest"
+        docker push "${BACKEND_IMAGE}:latest"
 
         echo "Backend image pushed successfully."
 
         echo "======================================"
-        echo "PUSHING STREAMLIT FRONTEND TO ECR"
+        echo "PUSHING STREAMLIT IMAGE"
         echo "======================================"
 
-        docker push "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
+        docker push "${FRONTEND_IMAGE}:${IMAGE_TAG}"
 
         docker tag \
-          "$REGISTRY/varynx-streamlit:$IMAGE_TAG" \
-          "$REGISTRY/varynx-streamlit:latest"
+          "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
+          "${FRONTEND_IMAGE}:latest"
 
-        docker push "$REGISTRY/varynx-streamlit:latest"
+        docker push "${FRONTEND_IMAGE}:latest"
 
         echo "Streamlit image pushed successfully."
 
         echo "======================================"
-        echo "VARYNX CONTAINER BUILD COMPLETED"
+        echo "VARYNX BUILD COMPLETED SUCCESSFULLY"
         echo "======================================"
 
-        echo "Backend: ${REGISTRY}/varynx-backend:${IMAGE_TAG}"
-        echo "Frontend: ${REGISTRY}/varynx-streamlit:${IMAGE_TAG}"
-
-        echo "Both images successfully pushed to Amazon ECR."
+        echo "Backend: ${BACKEND_IMAGE}:${IMAGE_TAG}"
+        echo "Frontend: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
