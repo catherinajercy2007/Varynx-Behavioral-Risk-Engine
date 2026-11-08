@@ -1,15 +1,18 @@
-﻿version: 0.2
+
+version: 0.2
 
 phases:
   pre_build:
     commands:
       - 'echo "Checking AWS configuration"'
       - 'test -n "$AWS_DEFAULT_REGION" || (echo "ERROR: AWS_DEFAULT_REGION is empty" && exit 1)'
-      - 'test -n "$AWS_ACCOUNT_ID" || (echo "ERROR: AWS_ACCOUNT_ID is empty" && exit 1)'
-      - 'export IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/varynx-backend"'
+      - 'echo "Retrieving AWS account identity"'
+      - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
+      - 'test -n "$ACCOUNT_ID" || (echo "ERROR: Unable to retrieve AWS_ACCOUNT_ID" && exit 1)'
+      - 'export IMAGE_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/varynx-backend"'
       - 'export IMAGE_TAG="latest"'
       - 'echo "Logging in to Amazon ECR"'
-      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
+      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
 
   build:
     commands:
