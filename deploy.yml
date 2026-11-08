@@ -1,0 +1,93 @@
+
+name: Deploy Varynx to Amazon ECS
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+  BACKEND_SERVICE: ${{ vars.ECS_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.ECS_FRONTEND_SERVICE }}
+  BACKEND_REPOSITORY: varynx-backend
+  FRONTEND_REPOSITORY: varynx-streamlit
+
+jobs:
+  deploy:
+    name: Build and deploy Varynx
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t "$REGISTRY/$BACKEND_REPOSITORY:$TAG" .
+
+          docker push "$REGISTRY/$BACKEND_REPOSITORY:$TAG"
+
+      - name: Build and push Streamlit image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -f dashboard_streamlit/Dockerfile \
+            -t "$REGISTRY/$FRONTEND_REPOSITORY:$TAG" .
+
+          docker push "$REGISTRY/$FRONTEND_REPOSITORY:$TAG"
+
+      - name: Render backend task definition
+        id: backend-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/ecs-backend-task-definition.json
+          container-name: varynx-backend
+          image: ${{ steps.ecr.outputs.registry }}/varynx-backend:${{ github.sha }}
+
+      - name: Deploy backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.backend-task.outputs.task-definition }}
+          service: ${{ env.BACKEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Render frontend task definition
+        id: frontend-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/ecs-frontend-task-definition.json
+          container-name: varynx-streamlit
+          image: ${{ steps.ecr.outputs.registry }}/varynx-streamlit:${{ github.sha }}
+
+      - name: Deploy Streamlit to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.frontend-task.outputs.task-definition }}
+          service: ${{ env.FRONTEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
