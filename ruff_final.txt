@@ -1,3 +1,0 @@
-All checks passed!
-
-RC=0
