@@ -6,12 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
-COPY varynx ./varynx
-
-RUN pip install --no-cache-dir .
-
-COPY dashboard_streamlit ./dashboard_streamlit
+COPY dashboard_streamlit/ /app/
 
 RUN pip install --no-cache-dir \
     streamlit \
@@ -19,8 +14,10 @@ RUN pip install --no-cache-dir \
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "dashboard_streamlit/app.py", \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health')"
+
+CMD ["streamlit", "run", "app.py", \
      "--server.address=0.0.0.0", \
      "--server.port=8501", \
      "--server.headless=true"]
-
