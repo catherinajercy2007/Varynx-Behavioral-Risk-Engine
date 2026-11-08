@@ -1,0 +1,89 @@
+
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - |
+        set -eu
+
+        echo "Preparing Streamlit frontend build..."
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
+
+        echo "AWS Account: ${ACCOUNT_ID}"
+        echo "AWS Region: ${AWS_REGION}"
+        echo "Frontend Repository: varynx-streamlit"
+
+        aws ecr get-login-password --region "${AWS_REGION}" \
+          | docker login --username AWS --password-stdin "${REGISTRY}"
+
+        echo "ECR login successful."
+
+  build:
+    commands:
+      - |
+        set -eu
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
+
+        SOURCE_VERSION="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+        IMAGE_TAG=$(printf '%s' "${SOURCE_VERSION}" | cut -c1-12)
+
+        echo "======================================"
+        echo "BUILDING VARYNX STREAMLIT FRONTEND"
+        echo "======================================"
+
+        if [ ! -f dashboard_streamlit/Dockerfile ]; then
+          echo "ERROR: dashboard_streamlit/Dockerfile not found."
+          exit 1
+        fi
+
+        if [ ! -f dashboard_streamlit/app.py ]; then
+          echo "ERROR: dashboard_streamlit/app.py not found."
+          exit 1
+        fi
+
+        docker build \
+          --file dashboard_streamlit/Dockerfile \
+          --tag "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
+          --tag "${FRONTEND_IMAGE}:latest" \
+          .
+
+        echo "Streamlit Docker image built successfully."
+
+  post_build:
+    commands:
+      - |
+        set -eu
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
+
+        SOURCE_VERSION="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+        IMAGE_TAG=$(printf '%s' "${SOURCE_VERSION}" | cut -c1-12)
+
+        echo "======================================"
+        echo "PUSHING STREAMLIT IMAGE TO ECR"
+        echo "======================================"
+
+        docker push "${FRONTEND_IMAGE}:${IMAGE_TAG}"
+        docker push "${FRONTEND_IMAGE}:latest"
+
+        echo "======================================"
+        echo "STREAMLIT BUILD COMPLETED"
+        echo "======================================"
+
+        echo "Frontend Image: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+        echo "Latest Image: ${FRONTEND_IMAGE}:latest"

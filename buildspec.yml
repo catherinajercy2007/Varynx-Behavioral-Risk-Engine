@@ -4,23 +4,54 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - 'echo "Checking AWS configuration"'
-      - 'test -n "$AWS_DEFAULT_REGION" || (echo "ERROR: AWS_DEFAULT_REGION is empty" && exit 1)'
-      - 'echo "Retrieving AWS account identity"'
-      - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
-      - 'test -n "$ACCOUNT_ID" || (echo "ERROR: Unable to retrieve AWS_ACCOUNT_ID" && exit 1)'
-      - 'export IMAGE_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/varynx-backend"'
-      - 'export IMAGE_TAG="latest"'
-      - 'echo "Logging in to Amazon ECR"'
-      - 'aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"'
+      - |
+        set -eu
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
+        IMAGE_TAG=$(printf '%s' "${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}" | cut -c1-12)
+
+        echo "Logging in to Amazon ECR..."
+        aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
   build:
     commands:
-      - 'echo "Building Varynx backend Docker image"'
-      - 'docker build -t "${IMAGE_URI}:${IMAGE_TAG}" .'
+      - |
+        set -eu
+
+        echo "Checking Streamlit files..."
+
+        test -f dashboard_streamlit/Dockerfile || {
+          echo "ERROR: dashboard_streamlit/Dockerfile is missing"
+          exit 1
+        }
+
+        test -f dashboard_streamlit/app.py || {
+          echo "ERROR: dashboard_streamlit/app.py is missing"
+          exit 1
+        }
+
+        echo "Building Streamlit image..."
+
+        docker build \
+          --file dashboard_streamlit/Dockerfile \
+          --tag "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
+          --tag "${FRONTEND_IMAGE}:latest" \
+          .
+
+        echo "Checking generated image..."
+        docker images "${FRONTEND_IMAGE}"
 
   post_build:
     commands:
-      - 'echo "Pushing Varynx image to ECR"'
-      - 'docker push "${IMAGE_URI}:${IMAGE_TAG}"'
-      - 'echo "Varynx image pushed successfully"'
+      - |
+        set -eu
+
+        echo "Pushing Streamlit image..."
+
+        docker push "${FRONTEND_IMAGE}:${IMAGE_TAG}"
+        docker push "${FRONTEND_IMAGE}:latest"
+
+        echo "Streamlit image successfully pushed."
+        echo "Image: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
