@@ -7,32 +7,70 @@ env:
 phases:
   pre_build:
     commands:
-      - echo "Preparing Varynx container builds..."
-      - test -n "$AWS_DEFAULT_REGION" || (echo "AWS_DEFAULT_REGION is missing" && exit 1)
-      - export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - export REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      - export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
-      - export IMAGE_TAG="${IMAGE_TAG:0:12}"
-      - echo "AWS account: $ACCOUNT_ID"
-      - echo "AWS region: $AWS_DEFAULT_REGION"
-      - echo "Image tag: $IMAGE_TAG"
-      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+      - |
+        set -euo pipefail
+
+        echo "Preparing Varynx container builds..."
+
+        test -n "$AWS_DEFAULT_REGION" || {
+          echo "AWS_DEFAULT_REGION is missing"
+          exit 1
+        }
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+        IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+        IMAGE_TAG="${IMAGE_TAG:0:12}"
+
+        echo "AWS account: ${ACCOUNT_ID}"
+        echo "AWS region: ${AWS_DEFAULT_REGION}"
+        echo "Image tag: ${IMAGE_TAG}"
+
+        aws ecr get-login-password --region "$AWS_DEFAULT_REGION" \
+          | docker login --username AWS --password-stdin "$REGISTRY"
 
   build:
     commands:
-      - echo "Building Varynx FastAPI backend..."
-      - docker build -f Dockerfile -t "$REGISTRY/varynx-backend:$IMAGE_TAG" .
-      - echo "Building Varynx Streamlit frontend..."
-      - docker build -f dashboard_streamlit/Dockerfile -t "$REGISTRY/varynx-streamlit:$IMAGE_TAG" .
+      - |
+        set -euo pipefail
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+        IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+        IMAGE_TAG="${IMAGE_TAG:0:12}"
+
+        echo "Building Varynx FastAPI backend..."
+
+        docker build \
+          -f Dockerfile \
+          -t "$REGISTRY/varynx-backend:$IMAGE_TAG" .
+
+        echo "Building Varynx Streamlit frontend..."
+
+        docker build \
+          -f dashboard_streamlit/Dockerfile \
+          -t "$REGISTRY/varynx-streamlit:$IMAGE_TAG" .
 
   post_build:
     commands:
-      - echo "Pushing backend image..."
-      - docker push "$REGISTRY/varynx-backend:$IMAGE_TAG"
-      - docker tag "$REGISTRY/varynx-backend:$IMAGE_TAG" "$REGISTRY/varynx-backend:latest"
-      - docker push "$REGISTRY/varynx-backend:latest"
-      - echo "Pushing Streamlit frontend image..."
-      - docker push "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
-      - docker tag "$REGISTRY/varynx-streamlit:$IMAGE_TAG" "$REGISTRY/varynx-streamlit:latest"
-      - docker push "$REGISTRY/varynx-streamlit:latest"
-      - echo "Both Varynx images pushed successfully."
+      - |
+        set -euo pipefail
+
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+        IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+        IMAGE_TAG="${IMAGE_TAG:0:12}"
+
+        echo "Pushing backend image..."
+
+        docker push "$REGISTRY/varynx-backend:$IMAGE_TAG"
+        docker tag "$REGISTRY/varynx-backend:$IMAGE_TAG" "$REGISTRY/varynx-backend:latest"
+        docker push "$REGISTRY/varynx-backend:latest"
+
+        echo "Pushing Streamlit frontend image..."
+
+        docker push "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
+        docker tag "$REGISTRY/varynx-streamlit:$IMAGE_TAG" "$REGISTRY/varynx-streamlit:latest"
+        docker push "$REGISTRY/varynx-streamlit:latest"
+
+        echo "Both Varynx images pushed successfully."
