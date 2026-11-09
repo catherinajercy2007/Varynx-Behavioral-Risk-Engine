@@ -29,4 +29,3 @@ phases:
       - echo "Pushing frontend..."
       - docker push "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
       - echo "Both images pushed successfully."
-
