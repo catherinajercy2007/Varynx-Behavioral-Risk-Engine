@@ -1,57 +1,32 @@
 
 version: 0.2
 
+env:
+  shell: bash
+
 phases:
   pre_build:
     commands:
-      - |
-        set -eu
-        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        AWS_REGION="${AWS_DEFAULT_REGION:-ap-southeast-2}"
-        REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        FRONTEND_IMAGE="${REGISTRY}/varynx-streamlit"
-        IMAGE_TAG=$(printf '%s' "${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}" | cut -c1-12)
-
-        echo "Logging in to Amazon ECR..."
-        aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+      - echo "Preparing Varynx deployment..."
+      - test -n "$AWS_DEFAULT_REGION" || (echo "AWS_DEFAULT_REGION missing" && exit 1)
+      - export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - export REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      - export IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}"
+      - export IMAGE_TAG="${IMAGE_TAG:0:12}"
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
   build:
     commands:
-      - |
-        set -eu
-
-        echo "Checking Streamlit files..."
-
-        test -f dashboard_streamlit/Dockerfile || {
-          echo "ERROR: dashboard_streamlit/Dockerfile is missing"
-          exit 1
-        }
-
-        test -f dashboard_streamlit/app.py || {
-          echo "ERROR: dashboard_streamlit/app.py is missing"
-          exit 1
-        }
-
-        echo "Building Streamlit image..."
-
-        docker build \
-          --file dashboard_streamlit/Dockerfile \
-          --tag "${FRONTEND_IMAGE}:${IMAGE_TAG}" \
-          --tag "${FRONTEND_IMAGE}:latest" \
-          .
-
-        echo "Checking generated image..."
-        docker images "${FRONTEND_IMAGE}"
+      - echo "Building FastAPI backend..."
+      - docker build -f Dockerfile.backend -t "$REGISTRY/varynx-backend:$IMAGE_TAG" .
+      - echo "Building Streamlit frontend..."
+      - docker build -f Dockerfile.frontend -t "$REGISTRY/varynx-streamlit:$IMAGE_TAG" .
 
   post_build:
     commands:
-      - |
-        set -eu
+      - echo "Pushing backend..."
+      - docker push "$REGISTRY/varynx-backend:$IMAGE_TAG"
+      - echo "Pushing frontend..."
+      - docker push "$REGISTRY/varynx-streamlit:$IMAGE_TAG"
+      - echo "Both images pushed successfully."
 
-        echo "Pushing Streamlit image..."
-
-        docker push "${FRONTEND_IMAGE}:${IMAGE_TAG}"
-        docker push "${FRONTEND_IMAGE}:latest"
-
-        echo "Streamlit image successfully pushed."
-        echo "Image: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
