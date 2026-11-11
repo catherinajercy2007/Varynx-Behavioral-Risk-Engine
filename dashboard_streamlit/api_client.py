@@ -1,39 +1,16 @@
 
-"""HTTP client for the Varynx FastAPI backend.
-
-Features:
-- Short-lived caching for successful GET responses.
-- Consistent timeout and connection-error handling.
-- Safe handling of HTTP 429, 502, 503 and other errors.
-- Detection of HTML challenge/proxy responses.
-- No automatic retries that could amplify rate limiting.
-
-All dashboard pages should use this module for backend communication.
-"""
+"""HTTP client for the Varynx FastAPI backend."""
 from __future__ import annotations
 
 import os
-from datetime import UTC
-from email.utils import parsedate_to_datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
 import requests
-import streamlit as st
-
-
-# ---------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------
-
-GET_CACHE_TTL_SECONDS = 15
-CONNECT_TIMEOUT_SECONDS = 5
-READ_TIMEOUT_SECONDS = 15
-MAX_ERROR_MESSAGE_LENGTH = 500
 
 
 def get_api_base() -> str:
-    """Return the configured API base URL."""
     return os.environ.get(
         "VARYNX_API_URL",
         "http://127.0.0.1:8000/api/v1",
@@ -41,344 +18,111 @@ def get_api_base() -> str:
 
 
 def get_api_key() -> str | None:
-    """Return the configured API key, if available."""
-    key = os.environ.get("VARYNX_API_KEY")
-    return key.strip() if key and key.strip() else None
+    return os.environ.get("VARYNX_API_KEY")
 
 
 def _headers() -> dict[str, str]:
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-
+    headers = {"Content-Type": "application/json"}
     key = get_api_key()
     if key:
         headers["X-API-Key"] = key
-
     return headers
 
 
-# ---------------------------------------------------------------------
-# API exceptions
-# ---------------------------------------------------------------------
-
 class APIError(Exception):
-    """A safe, user-readable API communication error."""
+    """Raised when the API returns an error or cannot be reached."""
 
-    def __init__(
-        self,
-        status_code: int,
-        message: str,
-        retry_after: str | None = None,
-        error_code: str | None = None,
-    ) -> None:
+    def __init__(self, status_code: int, message: str) -> None:
+        super().__init__(message)
         self.status_code = status_code
         self.message = message
-        self.retry_after = retry_after
-        self.error_code = error_code
 
-        super().__init__(message)
-
-
-def _shorten_message(message: str) -> str:
-    """Remove excessive whitespace and limit displayed error text."""
-    message = " ".join(str(message).split())
-
-    if len(message) > MAX_ERROR_MESSAGE_LENGTH:
-        message = message[:MAX_ERROR_MESSAGE_LENGTH].rstrip() + "..."
-
-    return message
-
-
-def _retry_after_seconds(value: str | None) -> str | None:
-    """Normalize Retry-After into a readable duration where possible."""
-    if not value:
-        return None
-
-    try:
-        seconds = int(value)
-        return f"{seconds} seconds"
-    except (TypeError, ValueError):
-        pass
-
-    try:
-        retry_time = parsedate_to_datetime(value)
-        if retry_time.tzinfo is None:
-            retry_time = retry_time.replace(tzinfo=UTC)
-
-        now = UTC.now()
-        seconds = max(0, int((retry_time - now).total_seconds()))
-        return f"{seconds} seconds"
-    except (TypeError, ValueError, OverflowError):
-        return value
-
-
-# ---------------------------------------------------------------------
-# Response handling
-# ---------------------------------------------------------------------
 
 def _handle(response: requests.Response) -> Any:
-    """Validate an HTTP response and return its JSON payload."""
+    """Parse API responses without exposing HTML proxy/challenge pages."""
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
 
-    status = response.status_code
-    content_type = response.headers.get("Content-Type", "").lower()
-    body = response.text or ""
-
-    # Detect Cloudflare challenges and other HTML proxy responses.
-    is_html = (
-        "text/html" in content_type
-        or body.lstrip().lower().startswith(
-            ("<!doctype html", "<html")
-        )
-    )
-
-    if status == 429:
-        retry_after = _retry_after_seconds(
-            response.headers.get("Retry-After")
-        )
-
-        if is_html and (
-            "cloudflare" in body.lower()
-            or "just a moment" in body.lower()
-        ):
+    if not response.ok:
+        if isinstance(payload, dict):
             message = (
-                "The backend request was challenged or rate-limited "
-                "by Cloudflare. This is an upstream access issue, not "
-                "a Varynx JSON API response."
+                payload.get("message")
+                or payload.get("detail")
+                or payload.get("error")
+                or f"API request failed with HTTP {response.status_code}"
             )
         else:
             message = (
-                "Varynx API rate limit exceeded. Wait before making "
-                "another request."
+                f"API request failed with HTTP {response.status_code}. "
+                "The server returned a non-JSON response."
             )
+        raise APIError(response.status_code, str(message))
 
-        if retry_after:
-            message += f" Suggested wait: {retry_after}."
-
+    if payload is None:
         raise APIError(
-            status,
-            message,
-            retry_after=retry_after,
-            error_code="UPSTREAM_RATE_LIMIT",
+            response.status_code,
+            "The backend returned an empty or invalid JSON response.",
         )
 
-    if status in (502, 503, 504):
-        message = (
-            "The backend or an upstream proxy is temporarily "
-            f"unavailable (HTTP {status}). Check the backend service "
-            "and its deployment logs."
-        )
-
-        if is_html:
-            message += " The upstream returned an HTML error page."
-
-        raise APIError(
-            status,
-            message,
-            retry_after=_retry_after_seconds(
-                response.headers.get("Retry-After")
-            ),
-            error_code="UPSTREAM_UNAVAILABLE",
-        )
-
-    if status >= 400:
-        if is_html:
-            message = (
-                f"The server returned an HTML error page "
-                f"(HTTP {status}). The response was not JSON."
-            )
-            raise APIError(status, message)
-
-        try:
-            payload = response.json()
-
-            if isinstance(payload, dict):
-                message = (
-                    payload.get("message")
-                    or payload.get("detail")
-                    or payload.get("error")
-                    or f"HTTP {status}"
-                )
-                error_code = payload.get("error_code")
-            else:
-                message = str(payload)
-                error_code = None
-
-        except (ValueError, requests.exceptions.JSONDecodeError):
-            message = f"HTTP {status}: {_shorten_message(body)}"
-            error_code = None
-
-        raise APIError(
-            status,
-            _shorten_message(message),
-            retry_after=_retry_after_seconds(
-                response.headers.get("Retry-After")
-            ),
-            error_code=error_code,
-        )
-
-    if is_html:
-        raise APIError(
-            status,
-            "The server returned HTML instead of JSON. "
-            "Check the backend URL and any proxy or Cloudflare challenge.",
-            error_code="NON_JSON_RESPONSE",
-        )
-
-    if status == 204 or not body.strip():
-        return {}
-
-    try:
-        payload = response.json()
-    except (ValueError, requests.exceptions.JSONDecodeError) as exc:
-        raise APIError(
-            status,
-            "The backend returned an invalid JSON response.",
-            error_code="INVALID_JSON",
-        ) from exc
-
+    # Support both {"data": ...} and direct JSON responses.
     if isinstance(payload, dict) and "data" in payload:
         return payload["data"]
 
     return payload
 
 
-# ---------------------------------------------------------------------
-# HTTP request execution
-# ---------------------------------------------------------------------
-
-def _perform_request(
+def _request(
     method: str,
-    url: str,
+    path: str,
     *,
     params: dict | None = None,
     body: dict | None = None,
-    api_key: str | None = None,
 ) -> Any:
-    """Execute one request without automatic retries."""
-
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-
-    if api_key:
-        headers["X-API-Key"] = api_key
+    url = f"{get_api_base()}{path}"
 
     try:
         response = requests.request(
             method=method,
             url=url,
-            headers=headers,
+            headers=_headers(),
             params=params,
             json=body,
-            timeout=(
-                CONNECT_TIMEOUT_SECONDS,
-                READ_TIMEOUT_SECONDS,
-            ),
+            timeout=(5, 20),
         )
-
-    except requests.exceptions.Timeout as exc:
+    except requests.Timeout as exc:
+        raise APIError(0, f"Request timed out: {url}") from exc
+    except requests.ConnectionError as exc:
         raise APIError(
             0,
-            "The backend request timed out. Check whether the Render "
-            "service is awake and responding.",
-            error_code="REQUEST_TIMEOUT",
+            f"Cannot connect to the Varynx backend: {url}",
         ) from exc
-
-    except requests.exceptions.ConnectionError as exc:
-        raise APIError(
-            0,
-            "Cannot connect to the Varynx backend. Check the backend "
-            "URL and Render service status.",
-            error_code="CONNECTION_ERROR",
-        ) from exc
-
-    except requests.exceptions.RequestException as exc:
-        raise APIError(
-            0,
-            f"HTTP request failed: {_shorten_message(exc)}",
-            error_code="REQUEST_ERROR",
-        ) from exc
+    except requests.RequestException as exc:
+        raise APIError(0, f"Network request failed: {exc}") from exc
 
     return _handle(response)
 
 
-# ---------------------------------------------------------------------
-# Cached GET requests
-# ---------------------------------------------------------------------
-
-@st.cache_data(
-    ttl=GET_CACHE_TTL_SECONDS,
-    max_entries=256,
-    show_spinner=False,
-)
-def _cached_get(
-    url: str,
-    params_items: tuple,
-    api_key: str | None,
-) -> Any:
-    """Cache successful GET responses for a short period."""
-
-    params = dict(params_items) if params_items else None
-
-    return _perform_request(
-        "GET",
-        url,
-        params=params,
-        api_key=api_key,
-    )
-
-
-def clear_api_cache() -> None:
-    """Clear cached API responses when explicitly required."""
-    _cached_get.clear()
-
-
 def _get(path: str, params: dict | None = None) -> Any:
-    url = get_api_base() + path
-
-    # Sorting produces a stable cache key regardless of dictionary order.
-    params_items = tuple(
-        sorted((params or {}).items())
-    )
-
-    return _cached_get(
-        url,
-        params_items,
-        get_api_key(),
-    )
+    return _request("GET", path, params=params)
 
 
 def _post(path: str, body: dict | None = None) -> Any:
-    return _perform_request(
-        "POST",
-        get_api_base() + path,
-        body=body,
-        api_key=get_api_key(),
-    )
+    return _request("POST", path, body=body or {})
 
 
 def _patch(path: str) -> Any:
-    return _perform_request(
-        "PATCH",
-        get_api_base() + path,
-        api_key=get_api_key(),
-    )
+    return _request("PATCH", path)
 
 
 def _delete(path: str) -> Any:
-    return _perform_request(
-        "DELETE",
-        get_api_base() + path,
-        api_key=get_api_key(),
-    )
+    return _request("DELETE", path)
 
 
-# ---------------------------------------------------------------------
-# Public API methods
-# ---------------------------------------------------------------------
+# -------------------------------------------------------------------
+# Health, metrics and configuration
+# -------------------------------------------------------------------
 
 def get_health() -> dict:
     return _get("/health")
@@ -391,6 +135,10 @@ def get_metrics() -> dict:
 def get_config() -> dict:
     return _get("/config")
 
+
+# -------------------------------------------------------------------
+# Agent management
+# -------------------------------------------------------------------
 
 def register_agent(
     agent_id: str,
@@ -414,6 +162,10 @@ def get_agent_profile(agent_id: str) -> dict:
     return _get(f"/agents/{quote(agent_id, safe='')}/profile")
 
 
+# -------------------------------------------------------------------
+# Session management
+# -------------------------------------------------------------------
+
 def create_session(agent_id: str) -> dict:
     return _post("/sessions", {"agent_id": agent_id})
 
@@ -421,6 +173,10 @@ def create_session(agent_id: str) -> dict:
 def get_session(session_id: str) -> dict:
     return _get(f"/sessions/{quote(session_id, safe='')}")
 
+
+# -------------------------------------------------------------------
+# Lease management
+# -------------------------------------------------------------------
 
 def create_lease(
     agent_id: str,
@@ -450,6 +206,10 @@ def revoke_lease(lease_id: str) -> dict:
     return _delete(f"/leases/{quote(lease_id, safe='')}")
 
 
+# -------------------------------------------------------------------
+# Security event ingestion
+# -------------------------------------------------------------------
+
 def submit_event(
     agent_id: str,
     session_id: str,
@@ -459,9 +219,8 @@ def submit_event(
     authorization_result: str = "allowed",
     is_simulated: bool = True,
 ) -> dict:
-    from datetime import datetime
-
-    return _post("/events", {
+    """Submit one security event to POST /api/v1/events."""
+    event = {
         "agent_id": agent_id,
         "session_id": session_id,
         "timestamp": datetime.now(UTC).isoformat(),
@@ -470,8 +229,13 @@ def submit_event(
         "target_resource": target_resource,
         "authorization_result": authorization_result,
         "is_simulated": is_simulated,
-    })
+    }
+    return _post("/events", event)
 
+
+# -------------------------------------------------------------------
+# Audit and provenance
+# -------------------------------------------------------------------
 
 def get_audit_records(
     agent_id: str | None = None,
@@ -479,13 +243,10 @@ def get_audit_records(
     limit: int = 100,
 ) -> dict:
     params = {"limit": limit}
-
     if agent_id:
         params["agent_id"] = agent_id
-
     if record_type:
         params["record_type"] = record_type
-
     return _get("/audit", params=params)
 
 
